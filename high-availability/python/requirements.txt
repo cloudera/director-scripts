@@ -1,0 +1,3 @@
+argparse; python_version < '2.7'
+cm-api==9.0.0
+retrying==1.3.3

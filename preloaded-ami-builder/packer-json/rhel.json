@@ -1,0 +1,56 @@
+{
+    "variables": {
+        "region": "",
+        "parcel_url": "",
+        "ami": "",
+        "vpc_id": "",
+        "subnet_id": "",
+        "security_group_id": "",
+        "ami_prefix": "",
+        "ami_virtualization_type": "paravirtual",
+        "root_device_name": "/dev/sda",
+        "ssh_username": "ec2-user"
+    },
+    "builders": [
+    {
+        "type": "amazon-ebs",
+        "region": "{{user `region`}}",
+        "source_ami": "{{user `ami`}}",
+        "instance_type": "m3.xlarge",
+        "ssh_username": "{{user `ssh_username`}}",
+        "ami_name": "{{user `ami_prefix`}} {{timestamp}}",
+        "ami_virtualization_type": "{{user `ami_virtualization_type`}}",
+        "ssh_timeout": "10m",
+        "launch_block_device_mappings": [{
+            "device_name": "{{user `root_device_name`}}",
+            "volume_size": 30,
+            "delete_on_termination": true
+        }],
+        "vpc_id": "{{user `vpc_id`}}",
+        "subnet_id": "{{user `subnet_id`}}",
+        "security_group_id": "{{user `security_group_id`}}"
+    }],
+    "provisioners": [
+    {
+        "type": "shell",
+        "inline": "sudo yum install --assumeyes gdisk"
+    },
+    {
+        "type": "shell",
+        "script": "scripts/provisioning/rewrite_root_disk_partition_table.sh",
+        "environment_vars": ["PATH=/bin:/sbin:/usr/bin:/usr/sbin",
+                             "VIRTUALIZATION_TYPE={{user `ami_virtualization_type`}}"],
+        "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E {{ .Path }}"
+    },
+    {
+        "type": "shell",
+        "inline": "sudo reboot"
+    },
+    {
+        "type": "shell",
+        "scripts": ["scripts/provisioning/rhel6_provisioner.sh",
+                    "scripts/provisioning/parcel_provisioner.sh"],
+        "environment_vars": ["PARCEL_URL={{user `parcel_url`}}"],
+        "pause_before": "120s"
+    }]
+}

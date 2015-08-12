@@ -47,9 +47,10 @@ echo "Downloading parcel from $PARCEL_URL"
 sudo curl "${PARCEL_URL}" -o "/opt/cloudera/parcel-repo/$PARCEL_NAME"
 sudo curl "${PARCEL_URL}.sha1" -o "/opt/cloudera/parcel-repo/$PARCEL_NAME.sha"
 
-sudo cp /opt/cloudera/parcel-repo/*.parcel /opt/cloudera/parcel-cache
-
-sudo chown -R cloudera-scm:cloudera-scm /opt/cloudera
+for parcel_path in /opt/cloudera/parcel-repo/*.parcel
+do
+    sudo ln "$parcel_path" "/opt/cloudera/parcel-cache/$(basename $parcel_path)"
+done
 
 echo "Sleeping for 300 seconds to ensure parcels will properly sync with AWS."
 sleep 300

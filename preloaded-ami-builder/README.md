@@ -4,9 +4,11 @@
 
 This is a script that allows for the creation of AMIs preloaded with CDH parcels for use by
 Cloudera Director. Preloading parcels cuts down significantly on the bootstrapping time
-for new cluster creation, as the downloading and distribution of parcel files can be skipped
+for new cluster creation, as the downloading and distribution* of parcel files can be skipped
 by the underlying Cloudera Manager installation. At the moment, this script only supports
 CentOS 6.4 through 6.6 and Red Hat Enterprise Linux 6.4 through 6.6.
+
+*Note*: Please refer to the [Notes](#Notes) section for more information about what "parcel distribution" entails.
 
 # Prerequisites
 
@@ -31,6 +33,18 @@ AWS_ACCESS_KEY variables. Please refer to Packer's documentation
 Packer, by default, will use the appropriate defaults and set up temporary security groups
 to use while provisioning a new instance. This script allows the use of a `PACKER_VARS`
 environment variable in order to provide more detailed customization.
+
+*Note*: If you see the following error while running this script:
+
+    amazon-ebs: sudo: sorry, you must have a tty to run sudo
+
+You are likely running Packer 0.8 or newer.  You will need to add the `ssh_pty` variable under the amazon-ebs builder present in `packer-json/rhel.json` and set it to `true`:
+
+    ...
+    "vpc_id": "{{user `vpc_id`}}",
+    "subnet_id": "{{user `subnet_id`}}",
+    "security_group_id": "{{user `security_group_id`}}",
+    "ssh_pty": "true"
 
 # Available packer variables
 
@@ -85,8 +99,14 @@ This script can take several minutes, and goes through the following steps:
 8. Packer creates a new AMI based on the stopped AMI.
 9. Finally, Packer cleans up the existing instance and any created security groups, keys, etc.
 
-# Notes
+# <a name="notes"></a> Notes
 
 For HVM AMIs, the file resize that occurs as part of this script expects the root device on
 the base AMI to be /dev/xvda, /dev/sda, or /dev/sda1. These root devices should be accurate for
 most HVM AMIs, but it's possible there are unusually crafted AMIs that use a different root device.
+
+When observing the bootstrapping process with preloaded AMIs, the DOWNLOADING phase of parcel
+activation should be skipped, but the DISTRIBUTION phase will still appear. This is because the
+DISTRIBUTION phase does two things: sends the parcel out to each node, and extracts the parcel. The
+parcel sending will be skipped because the parcels will already be preloaded onto each node, but the
+parcel extraction still needs to occur.

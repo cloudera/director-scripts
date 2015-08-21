@@ -23,6 +23,7 @@ from urlparse import urlparse
 import argparse
 import os
 import sys
+import time
 
 
 class CommandWait(Thread):
@@ -166,6 +167,49 @@ def configure_services(cluster):
                 service.create_role('KT_RENEWER-1', 'KT_RENEWER',
                                     hue_server_role[0].hostRef.hostId)
 
+def wait_for_generate_credentials(cloudera_manager):
+    """
+    Finds the GenerateCredentials command and waits for it to complete
+
+    @type  cloudera_manager: ClouderaManager
+    @param cloudera_manager: The ClouderaManager instance.
+    """
+    generate_commands = None
+    num_tries = 3
+
+    for i in range(0, num_tries):
+        generate_commands = find_command_by_name(cloudera_manager, 'GenerateCredentials')
+
+        # If the list is full
+        if generate_commands:
+            break
+
+        # Couldn't find the command, so sleep 5 seconds and try again
+        time.sleep(5)
+
+    # It's possible that multiple GenerateCredentials commands are generated during
+    # service configuration. We should wait for all of them.
+    if generate_commands:
+        for generate_command in generate_commands:
+            wait_for_command('Waiting for Generate Credentials', generate_command)
+
+
+def find_command_by_name(cloudera_manager, name):
+    """
+    Finds a running command by name
+
+    @type  cloudera_manager: ClouderaManager
+    @param cloudera_manager: The ClouderaManager instance.
+    @type  name: str
+    @param name: The name of the command to find
+    @rtype:  ApiCommand
+    @return: The command to return
+    """
+    commands = cloudera_manager.get_commands('full')
+    found_commands = [command for command in commands if command.name == name]
+
+    return found_commands
+
 
 def wait_for_command(msg, command):
     """
@@ -219,7 +263,7 @@ def main():
         wait_for_command('Stopping the cluster', cluster.stop())
         wait_for_command('Stopping MGMT services', mgmt_service.stop())
         configure_services(cluster)
-        wait_for_command('Generating credentials.', cloudera_manager.generate_credentials())
+        wait_for_generate_credentials(cloudera_manager)
         wait_for_command('Deploying client configs.', cluster.deploy_client_config())
         wait_for_command('Deploying cluster client configs', cluster.deploy_cluster_client_config())
         wait_for_command('Starting MGMT services', mgmt_service.start())

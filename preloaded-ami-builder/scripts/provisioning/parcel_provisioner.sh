@@ -52,5 +52,13 @@ do
     sudo ln "$parcel_path" "/opt/cloudera/parcel-cache/$(basename $parcel_path)"
 done
 
+if [ "$PREEXTRACT_PARCEL" = true ]
+then
+  echo "Preextracting parcels..."
+  sudo tar zxf "/opt/cloudera/parcel-repo/$PARCEL_NAME" -C "/opt/cloudera/parcels"
+  sudo ln -s "$(ls -1 /opt/cloudera/parcels)" /opt/cloudera/parcels/CDH
+  echo "Done"
+fi
+
 echo "Sleeping for 300 seconds to ensure parcels will properly sync with AWS."
 sleep 300

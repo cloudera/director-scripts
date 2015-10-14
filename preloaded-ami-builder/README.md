@@ -34,18 +34,6 @@ Packer, by default, will use the appropriate defaults and set up temporary secur
 to use while provisioning a new instance. This script allows the use of a `PACKER_VARS`
 environment variable in order to provide more detailed customization.
 
-*Note*: If you see the following error while running this script:
-
-    amazon-ebs: sudo: sorry, you must have a tty to run sudo
-
-You are likely running Packer 0.8 or newer.  You will need to add the `ssh_pty` variable under the amazon-ebs builder present in `packer-json/rhel.json` and set it to `true`:
-
-    ...
-    "vpc_id": "{{user `vpc_id`}}",
-    "subnet_id": "{{user `subnet_id`}}",
-    "security_group_id": "{{user `security_group_id`}}",
-    "ssh_pty": "true"
-
 # Available packer variables
 
 |Packer variable name|Description|
@@ -107,6 +95,10 @@ most HVM AMIs, but it's possible there are unusually crafted AMIs that use a dif
 
 When observing the bootstrapping process with preloaded AMIs, the DOWNLOADING phase of parcel
 activation should be skipped, but the DISTRIBUTION phase will still appear. This is because the
-DISTRIBUTION phase does two things: sends the parcel out to each node, and extracts the parcel. The
-parcel sending will be skipped because the parcels will already be preloaded onto each node, but the
-parcel extraction still needs to occur.
+DISTRIBUTION phase does two things: sends the parcel out to each node, and extracts the parcel.
+The parcel sending will be skipped because the parcels will already be preloaded onto each node,
+but the parcel extraction still needs to occur.
+
+## Preloading parcels and EBS prewarming
+
+When a block on an Amazon EBS volume is accessed for the first time, significant latency occurs due to the way EBS volumes are implemented. This has an impact on parcel extraction, even with parcel preloading. Director will [prewarm](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-prewarm.html) the parcel in order to speed up filesystem access to the parcel file. However, the extraction will still take some time as a result.

@@ -35,6 +35,7 @@ Usage: $0 <aws-region> <ami> <name> [parcel-url]
   <ami>:         The AMI you want to use as a base.
   <name>:        A descriptive name for the new AMI.
   [parcel-url]:  Optional parcel URL to use for preloading. Defaults to http://archive.cloudera.com/cdh5/parcels/5.4/
+  [repository-url]:  Optional Cloudera Manager yum repository URL to use for preloading. Defaults to http://archive.cloudera.com/cm5/redhat/6/x86_64/cm/
 
 EOF
 }
@@ -45,7 +46,7 @@ get_rhel_parcel_url()
   PARCEL_URL=$1$(curl -s $1 | grep "el6.parcel<" | sed -E "s/.*>(.*parcel)<\/a.*/\1/" 2>/dev/null)
 }
 
-if [ $# -lt 3 ] || [ $# -gt 4 ]; then
+if [ $# -lt 3 ] || [ $# -gt 5 ]; then
     usage
     exit 1
 fi
@@ -62,11 +63,12 @@ AWS_REGION=$1
 AMI=$2
 NAME=$3
 CDH_URL=${4-"http://archive.cloudera.com/cdh5/parcels/5.4/"}
+CM_REPO_URL=${5-"http://archive.cloudera.com/cm5/redhat/6/x86_64/cm/"}
 
 # Get the appropriate parcel file
 get_rhel_parcel_url $CDH_URL
 
 # Set up packer variables
-PACKER_VARS="$PACKER_VARS -var region=$AWS_REGION -var parcel_url=$PARCEL_URL"
+PACKER_VARS="$PACKER_VARS -var region=$AWS_REGION -var parcel_url=$PARCEL_URL -var cm_repository_url=$CM_REPO_URL"
 
 packer build $PACKER_VARS -var ami=$AMI -var ami_prefix="$NAME" packer-json/rhel.json

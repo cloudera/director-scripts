@@ -2,6 +2,7 @@
     "variables": {
         "region": "",
         "parcel_url": "",
+        "cm_repository_url": "",
         "ami": "",
         "vpc_id": "",
         "subnet_id": "",
@@ -9,7 +10,8 @@
         "ami_prefix": "",
         "ami_virtualization_type": "paravirtual",
         "root_device_name": "/dev/sda",
-        "ssh_username": "ec2-user"
+        "ssh_username": "ec2-user",
+        "preextract_parcel": "false"
     },
     "builders": [
     {
@@ -50,7 +52,8 @@
         "type": "shell",
         "scripts": ["scripts/provisioning/rhel6_provisioner.sh",
                     "scripts/provisioning/parcel_provisioner.sh"],
-        "environment_vars": ["PARCEL_URL={{user `parcel_url`}}"],
+        "environment_vars": ["PARCEL_URL={{user `parcel_url`}}", "CM_REPOSITORY_URL={{user `cm_repository_url`}}",
+                             "PREEXTRACT_PARCEL={{user `preextract_parcel`}}"],
         "pause_before": "120s"
     }]
 }

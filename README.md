@@ -38,3 +38,7 @@ cm-script-dependency-installer post-creation script.
 
 This post-creation script is meant to be run before either high-availability or kerberos. It will install the
 necessary Python dependencies required for both scripts.
+
+## Additional utility scripts
+
+The util directory contains additional utility scripts.

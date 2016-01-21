@@ -24,7 +24,7 @@ The script has 3 required arguments and 1 optional argument:
 * The AMI name. This is the name of the resulting AMI. The AMI name will have a timestamp
   concatenated onto the end of it as well.
 * Optionally, the parcel URL. This script will download parcels from this URL to preload
-  onto the new AMI. This defaults to http://archive.cloudera.com/cdh5/parcels/5.4/.
+  onto the new AMI. This defaults to http://archive.cloudera.com/cdh5/parcels/5.5/.
 
 Before you run the script, your environment must contain the AWS_SECRET_KEY and
 AWS_ACCESS_KEY variables. Please refer to Packer's documentation
@@ -53,7 +53,7 @@ Running the script in the trivial case is simple:
 
 Running the script with a non-default parcel URL is also straightforward:
 
-    sh build-ami.sh us-east-1 ami-26cc934e "AMI name" http://archive.cloudera.com/cdh5/parcels/5.4/
+    sh build-ami.sh us-east-1 ami-26cc934e "AMI name" http://archive.cloudera.com/cdh5/parcels/5.5/
 
 However, if you have a more customzied AWS setup, you will need to supply packer variables through the `PACKER_VARS`
 environment variable:
@@ -89,9 +89,27 @@ This script can take several minutes, and goes through the following steps:
 
 # <a name="notes"></a> Notes
 
+## Missing tty for sudo
+
+If you see the following error while running this script:
+
+    amazon-ebs: sudo: sorry, you must have a tty to run sudo
+
+You are likely running Packer 0.8 or newer.  You will need to add the `ssh_pty` variable under the amazon-ebs builder present in `packer-json/rhel.json` and set it to `true`:
+
+    ...
+    "vpc_id": "{{user `vpc_id`}}",
+    "subnet_id": "{{user `subnet_id`}}",
+    "security_group_id": "{{user `security_group_id`}}",
+    "ssh_pty": "true"
+
+## Root device locations
+
 For HVM AMIs, the file resize that occurs as part of this script expects the root device on
 the base AMI to be /dev/xvda, /dev/sda, or /dev/sda1. These root devices should be accurate for
 most HVM AMIs, but it's possible there are unusually crafted AMIs that use a different root device.
+
+## Preloading parcels and the DISTRIBUTION phase
 
 When observing the bootstrapping process with preloaded AMIs, the DOWNLOADING phase of parcel
 activation should be skipped, but the DISTRIBUTION phase will still appear. This is because the

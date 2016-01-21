@@ -34,7 +34,7 @@ Usage: $0 <aws-region> <ami> <name> [parcel-url]
   <aws-region>:  The AWS region that you want the new AMI to be housed on.
   <ami>:         The AMI you want to use as a base.
   <name>:        A descriptive name for the new AMI.
-  [parcel-url]:  Optional parcel URL to use for preloading. Defaults to http://archive.cloudera.com/cdh5/parcels/5.4/
+  [parcel-url]:  Optional parcel URL to use for preloading. Defaults to http://archive.cloudera.com/cdh5/parcels/5.5/
   [repository-url]:  Optional Cloudera Manager yum repository URL to use for preloading. Defaults to http://archive.cloudera.com/cm5/redhat/6/x86_64/cm/
 
 EOF
@@ -62,7 +62,7 @@ fi
 AWS_REGION=$1
 AMI=$2
 NAME=$3
-CDH_URL=${4-"http://archive.cloudera.com/cdh5/parcels/5.4/"}
+CDH_URL=${4-"http://archive.cloudera.com/cdh5/parcels/5.5/"}
 CM_REPO_URL=${5-"http://archive.cloudera.com/cm5/redhat/6/x86_64/cm/"}
 
 # Get the appropriate parcel file

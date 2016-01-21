@@ -1,10 +1,12 @@
 # Enabling High Availability for HDFS
 These scripts are intended for enabling high availability (HA) for the HDFS service on clusters
-newly created by Cloudera Director.
+newly created by Cloudera Director 1.5.x. HA clusters can be created directly by
+Cloudera Director 2.0.
 
-These scripts call the hdfsEnableNnHa API command to enable HA for the HDFS service. These scripts
-require the cluster be preconfigured with the appropriate role assignments (see Cluster Preconditions)
-since these scripts are not able to determine to which hosts to assign each role.
+These scripts call Cloudera Manager's hdfsEnableNnHa API command to enable HA for the HDFS service.
+These scripts require the cluster be preconfigured with the appropriate role assignments
+(see Cluster Preconditions) since these scripts are not able to determine to which hosts to assign
+each role.
 
 After calling hdfsEnableNnHa, these scripts will call hiveUpdateMetastoreNamenodes and restart Impala
 to finish updating the cluster for using HA HDFS.

@@ -15,7 +15,7 @@
 # limitations under the License.
 
 # For this script to work properly, you need to supply a URL to a parcel file,
-# e.g. http://archive-primary.cloudera.com/cdh5/parcels/5.3.0/CDH-5.3.0-1.cdh5.3.0.p0.30-wheezy.parcel
+# e.g. http://archive-primary.cloudera.com/cdh5/parcels/5.5.0/CDH-5.5.0-1.cdh5.5.0.p0.8-wheezy.parcel
 
 # You can do this one of two ways:
 # 1. Set a PARCEL_URL environment variable.

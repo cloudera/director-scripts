@@ -8,33 +8,38 @@ for new cluster creation, as the downloading and distribution* of parcel files c
 by the underlying Cloudera Manager installation. At the moment, this script only supports
 CentOS 6.4 through 6.6 and Red Hat Enterprise Linux 6.4 through 6.6.
 
-*Note*: Please refer to the [Notes](#Notes) section for more information about what "parcel distribution" entails.
+*Please refer to the [Notes](#notes) section for more information about what "parcel distribution"
+entails.
 
-# Prerequisites
+## Prerequisites
 
-Before running the script, [packer](https://packer.io/) must be installed.
+Before running the script, [Packer](https://packer.io/) must be installed. Use version 0.8 or
+newer.
 
-# About the script
+## About the script
 
-The script has 3 required arguments and 1 optional argument:
+The script has three required arguments and two optional arguments.
 
-* The region. This is the region that packer will run on. The resulting AMI will only be
+* The region. This is the region that Packer will run on. The resulting AMI will only be
   available on this region.
 * The base AMI. Packer will use this AMI as a base to create a preloaded AMI.
 * The AMI name. This is the name of the resulting AMI. The AMI name will have a timestamp
   concatenated onto the end of it as well.
-* Optionally, the parcel URL. This script will download parcels from this URL to preload
-  onto the new AMI. This defaults to http://archive.cloudera.com/cdh5/parcels/5.5/.
+* (Optional) The CDH parcel URL. This script will download parcels from this URL to preload
+  onto the new AMI. This defaults to http://archive.cloudera.com/cdh5/parcels/5.7/.
+* (Optional) The Cloudera Manager yum repository URL. This script will download and install
+  Cloudera manager from packages at this URL onto the new AMI. This defaults to
+  http://archive.cloudera.com/cm5/redhat/6/x86_64/cm/.
 
-Before you run the script, your environment must contain the AWS_SECRET_KEY and
-AWS_ACCESS_KEY variables. Please refer to Packer's documentation
+Before you run the script, your environment must be configured with your AWS access key ID and
+secret access key. Please refer to Packer's documentation
 [here](https://www.packer.io/docs/builders/amazon-ebs.html) for more details.
 
 Packer, by default, will use the appropriate defaults and set up temporary security groups
 to use while provisioning a new instance. This script allows the use of a `PACKER_VARS`
 environment variable in order to provide more detailed customization.
 
-# Available packer variables
+## Available packer variables
 
 |Packer variable name|Description|
 |--------------------|-----------|
@@ -45,7 +50,7 @@ environment variable in order to provide more detailed customization.
 |root_device_name|The name of the root device on the base AMI. Defaults to /dev/sda.|
 |ssh_username|The username used to SSH into the base AMI. Defaults to ec2-user.|
 
-# Running the script
+## Running the script
 
 Running the script in the trivial case is simple:
 
@@ -53,10 +58,10 @@ Running the script in the trivial case is simple:
 
 Running the script with a non-default parcel URL is also straightforward:
 
-    sh build-ami.sh us-east-1 ami-26cc934e "AMI name" http://archive.cloudera.com/cdh5/parcels/5.5/
+    sh build-ami.sh us-east-1 ami-26cc934e "AMI name" http://archive.cloudera.com/cdh5/parcels/5.6/
 
-However, if you have a more customzied AWS setup, you will need to supply packer variables through the `PACKER_VARS`
-environment variable:
+However, if you have a more customized AWS setup, you will need to supply packer variables through
+the `PACKER_VARS` environment variable:
 
     PACKER_VARS="-var vpc_id=vpc-12345678 -var subnet_id=subnet-12345678 -var security_group_id=sg-12345678" sh build-ami.sh us-east-1 ami-26cc934e "test ami"
 
@@ -72,44 +77,31 @@ and refer to that instead:
 
     PACKER_VARS="-var-file=config.json" sh build-ami.sh us-east-1 ami-26cc934e "test ami"
 
-# The process of the script
+## The process of the script
 
 This script can take several minutes, and goes through the following steps:
 
 1. Packer creates new security groups, keys, etc. as necessary.
 2. Packer instantiates a new base AMI image.
-3. The filesystem is resized to 30 GB.
+3. The file system is resized to 30 GB.
 4. The system is rebooted.
-5. Parcels are downloaded from the supplied parcel URL.
-6. The system pauses for 5 minutes to allow the AMI's filesystem to sync properly. This prevents issues like
-   truncated parcel files in the resulting AMI.
-7. Packer stops the modified AMI.
-8. Packer creates a new AMI based on the stopped AMI.
-9. Finally, Packer cleans up the existing instance and any created security groups, keys, etc.
+5. Cloudera Manager is installed from the supplied Cloudera Manager repository URL.
+6. Parcels are downloaded from the supplied parcel URL.
+7. The system pauses for 5 minutes to allow the AMI's file system to sync properly. This prevents
+   issues like truncated parcel files in the resulting AMI.
+8. Packer stops the modified AMI.
+9. Packer creates a new AMI based on the stopped AMI.
+10. Finally, Packer cleans up the existing instance and any created security groups, keys, etc.
 
-# <a name="notes"></a> Notes
+## <a name="notes"></a>Notes
 
-## Missing tty for sudo
-
-If you see the following error while running this script:
-
-    amazon-ebs: sudo: sorry, you must have a tty to run sudo
-
-You are likely running Packer 0.8 or newer.  You will need to add the `ssh_pty` variable under the amazon-ebs builder present in `packer-json/rhel.json` and set it to `true`:
-
-    ...
-    "vpc_id": "{{user `vpc_id`}}",
-    "subnet_id": "{{user `subnet_id`}}",
-    "security_group_id": "{{user `security_group_id`}}",
-    "ssh_pty": "true"
-
-## Root device locations
+### Root device locations
 
 For HVM AMIs, the file resize that occurs as part of this script expects the root device on
 the base AMI to be /dev/xvda, /dev/sda, or /dev/sda1. These root devices should be accurate for
 most HVM AMIs, but it's possible there are unusually crafted AMIs that use a different root device.
 
-## Preloading parcels and the DISTRIBUTION phase
+### Preloading parcels and the DISTRIBUTION phase
 
 When observing the bootstrapping process with preloaded AMIs, the DOWNLOADING phase of parcel
 activation should be skipped, but the DISTRIBUTION phase will still appear. This is because the
@@ -117,6 +109,11 @@ DISTRIBUTION phase does two things: sends the parcel out to each node, and extra
 The parcel sending will be skipped because the parcels will already be preloaded onto each node,
 but the parcel extraction still needs to occur.
 
-## Preloading parcels and EBS prewarming
+### Preloading parcels and EBS prewarming
 
-When a block on an Amazon EBS volume is accessed for the first time, significant latency occurs due to the way EBS volumes are implemented. This has an impact on parcel extraction, even with parcel preloading. Director will [prewarm](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-prewarm.html) the parcel in order to speed up filesystem access to the parcel file. However, the extraction will still take some time as a result.
+When a block on an Amazon EBS volume is accessed for the first time, significant latency occurs due
+to the way EBS volumes are implemented. This has an impact on parcel extraction, even with parcel
+preloading. Director will
+[prewarm](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-prewarm.html) the parcel in order
+o speed up file system access to the parcel file. However, the extraction will still take some time
+as a result.

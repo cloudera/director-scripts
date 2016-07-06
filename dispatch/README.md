@@ -17,7 +17,7 @@ script will be executed on the remote cluster.
 
 ```
 $ ./dispatch.sh -h
-Usage: ./dispatch.sh <optional arguments> cluster.conf job-script.sh [file1.jar file2.zip ...]"
+Usage: ./dispatch.sh <optional arguments> -f=cluster.conf job-script.sh [file1.jar file2.zip ...]"
 
 Optional arguments:
 
@@ -30,8 +30,10 @@ Optional arguments:
  -g, --gateway-group     gateway group name (default masters)
  -n, --ssh-username      ssh username to use to connect to the gateway (default ec2-user)
  -i, --ssh-private-key   ssh private key to use to  connect to the gateway (default ~/.ssh/id_rsa)
+ -f, --provision-config  Provision a new cluster with the given config file
+ -t, --terminate         Terminate the cluster (default false)
 
 Example usage:
 
-  ./dispatch.sh -u=admin -i=test.pem cluster.conf job1.sh data.zip
+  ./dispatch.sh -u=admin -i=test.pem -f=cluster.conf -t job1.sh data.zip
 ```

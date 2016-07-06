@@ -22,20 +22,22 @@ This script will create a new AMI and preload it with CDH parcels to speed up
 bootstrapping time for Cloudera Director. You must supply the ID of a CentOS
 or RHEL 6.4-6.6 AMI to use as a base for the preloaded AMI.
 
-Additionally, you must set the AWS_SECRET_KEY and AWS_ACCESS_KEY environment
-variables for this to work properly. Please refer to Packer's documentation
-here: https://www.packer.io/docs/builders/amazon-ebs.html.
+Additionally, you must ensure AWS credentials are available in the environment
+for this to work properly. Please refer to Packer's documentation here:
+https://www.packer.io/docs/builders/amazon-ebs.html.
 
-Extra packer options can be packed into the PACKER_VARS environment variable
+Extra packer options can be provided in the PACKER_VARS environment variable
 prior to executing this script.
 
-Usage: $0 <aws-region> <ami> <name> [parcel-url]
+Usage: $0 <aws-region> <ami> <name> [parcel-url] [repository-url]
 
   <aws-region>:  The AWS region that you want the new AMI to be housed on.
   <ami>:         The AMI you want to use as a base.
   <name>:        A descriptive name for the new AMI.
-  [parcel-url]:  Optional parcel URL to use for preloading. Defaults to http://archive.cloudera.com/cdh5/parcels/5.5/
-  [repository-url]:  Optional Cloudera Manager yum repository URL to use for preloading. Defaults to http://archive.cloudera.com/cm5/redhat/6/x86_64/cm/
+  [parcel-url]:  Optional parcel URL to use for preloading.
+                 Defaults to http://archive.cloudera.com/cdh5/parcels/5.7/
+  [repository-url]:  Optional Cloudera Manager yum repository URL to use for preloading.
+                     Defaults to http://archive.cloudera.com/cm5/redhat/6/x86_64/cm/
 
 EOF
 }
@@ -62,7 +64,7 @@ fi
 AWS_REGION=$1
 AMI=$2
 NAME=$3
-CDH_URL=${4-"http://archive.cloudera.com/cdh5/parcels/5.5/"}
+CDH_URL=${4-"http://archive.cloudera.com/cdh5/parcels/5.7/"}
 CM_REPO_URL=${5-"http://archive.cloudera.com/cm5/redhat/6/x86_64/cm/"}
 
 # Get the appropriate parcel file

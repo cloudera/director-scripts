@@ -13,11 +13,11 @@ if [ "$reason" = BOUND ] || [ "$reason" = RENEW ] ||
    [ "$reason" = REBIND ] || [ "$reason" = REBOOT ]
 then
     printf "\tnew_ip_address:%s\n" "${new_ip_address:?}"
-    host=$(hostname | cut -d'.' -f1)
-    domain=$(hostname | cut -d'.' -f2- -s)
+    host=$(hostname -s)
+    domain=$(hostname -d)
     domain=${domain:='cdh-cluster.internal'} # If no hostname is provided, use cdh-cluster.internal
     IFS='.' read -ra ipparts <<< "$new_ip_address"
-    ptrrec="${ipparts[3]}.${ipparts[2]}.${ipparts[1]}.${ipparts[0]}.in-addr.arpa"
+    ptrrec="$(printf %s "$new_ip_address." | tac -s.)in-addr.arpa"
     nsupdatecmds=$(mktemp -t nsupdate.XXXXXXXXXX)
     resolvconfupdate=$(mktemp -t resolvconfupdate.XXXXXXXXXX)
     echo updating resolv.conf

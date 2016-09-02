@@ -29,11 +29,12 @@ from pyhocon import ConfigFactory
 from urllib2 import HTTPError
 
 from cloudera.director.latest.models import (CloudProviderMetadata,
-    Environment, InstanceProviderConfig, InstanceTemplate, Login, SshCredentials,)
+    Environment, InstanceProviderConfig, InstanceTemplate, Login, SshCredentials,
+    ExternalDatabaseServerTemplate)
 
 from cloudera.director.common.client import ApiClient
 from cloudera.director.latest import (AuthenticationApi, EnvironmentsApi,
-    InstanceTemplatesApi, ProviderMetadataApi)
+    InstanceTemplatesApi, ProviderMetadataApi, DatabaseServersApi)
 
 def get_authenticated_client(args):
     """
@@ -123,12 +124,15 @@ def configure_ssh_credentials(ssh_config):
     # read and set optional ssh private key from config
     config_value = ssh_config.get_string('privateKey', '')
     if config_value:
-        with open(config_value) as f:
-            credentials.privateKey = f.read()
-        # read and set optional ssh private key passphrase from config
-        config_value = ssh_config.get_string('passphrase', '')
-        if config_value:
-            credentials.passphrase = config_value
+        if isfile(config_value):
+            with open(config_value) as f:
+                credentials.privateKey = f.read()
+        else:
+            credentials.privateKey = config_value
+    # read and set optional ssh private key passphrase from config
+    config_value = ssh_config.get_string('passphrase', '')
+    if config_value:
+        credentials.passphrase = config_value
     # set ssh port from config
     credentials.port = 22
     config_value = ssh_config.get_string('port', '')
@@ -297,6 +301,113 @@ def create_instance_template(client, environment_name, template):
     return template.name
 
 
+def add_existing_external_db_servers(client, config, environment_name):
+    """
+    Add existing external DB servers with data from the configuration
+
+    @param client:           authenticated API client
+    @param config:           parsed configuration
+    @param environment_name: name of the environment
+    :return:                 the external DB server config template names
+    """
+
+    db_server_names = []
+
+    ssh_config = config.get_config('ssh')
+    provider_config = config.get_config('provider')
+    merged_provider_config = merge_configs([ssh_config, provider_config])
+
+    db_configs_by_db_name = config.get_config('databaseServers')
+    for db_name in db_configs_by_db_name.viewkeys():
+        db_config = db_configs_by_db_name.get_config(db_name)
+        if is_existing_db_server(db_config):
+            merged_db_config = merge_configs([merged_provider_config, db_config])
+            if debug:
+                print "external db %s: %s" % (db_name, merged_db_config)
+            db_server_template = configure_external_db_server(merged_db_config, db_name)
+            print "Adding an existing external DB server: %s ..." % db_name
+            create_external_db_server(client, environment_name, db_server_template)
+            db_server_names.append(db_name)
+        else:
+            print "External DB server config template %s is not referring to an existing server" \
+                  % db_name
+
+    return db_server_names
+
+
+def is_existing_db_server(db_server_config):
+    """
+    Check if an external DB server config template is referring to an existing external DB server.
+    If a DB server config template has host and port defined, it is referring to an existing server.
+    :param db_server_config: External DB server config template
+    :return: True if the External DB server config template is referring to an existing DB server
+    """
+    return db_server_config.get('host') and db_server_config.get('port')
+
+
+def configure_external_db_server(db_server_config, db_name):
+    """
+    Create a External DB server config
+
+    :param db_server_config: external DB configuration data
+    :param db_name           external DB name
+    :return:                 external DB configuration
+    """
+    db_server_template = ExternalDatabaseServerTemplate()
+
+    db_server_template.name = db_name
+    # read and set db hostname from config
+    config_value = db_server_config.get('host', '')
+    if config_value:
+        db_server_template.hostname = config_value
+    # read and set db port from config
+    config_value = db_server_config.get('port', '')
+    if config_value:
+        db_server_template.port = config_value
+    # read and set db username from config
+    config_value = db_server_config.get('user', '')
+    if config_value:
+        db_server_template.username = config_value
+    # read and set db password from config
+    config_value = db_server_config.get('password', '')
+    if config_value:
+        db_server_template.password = config_value
+    # read and set db type from config
+    config_value = db_server_config.get('type', '')
+    if config_value:
+        # XXX DB type is case sensitive and must be ALL CAPS
+        db_server_template.type = config_value.upper()
+
+    if debug:
+        print "name: %s, hostname: %s, port: %s, username: %s, type: %s" % \
+            (db_name, db_server_template.hostname, db_server_template.port,
+             db_server_template.username, db_server_template.type)
+
+    return db_server_template
+
+
+def create_external_db_server(client, environment_name, db_server):
+    """
+    API call to create an external DB server with DB server config template
+
+    :param client:           authenticated API client
+    :param environment_name: name of the environment
+    :param db_server:        DB server config
+    :return:                 name of the created external DB server
+    """
+    api = DatabaseServersApi(client)
+    try:
+        api.create(environment_name, db_server)
+
+    except HTTPError as e:
+        if e.code == 302:
+            print "Warning: an database server with the same name already exists"
+        else:
+            raise e
+
+    return db_server.name
+
+
 def get_cloud_provider_metadata(client, provider_type):
     """
     Retrieve pluggable provider metadata
@@ -452,6 +563,9 @@ def main():
 
     print "Creating new instance templates ..."
     create_instance_templates(client, config, environment_name, providerType, cloudProviderMetadata)
+
+    print "Adding existing external database servers ..."
+    add_existing_external_db_servers(client, config, environment_name)
 
     return 0
 

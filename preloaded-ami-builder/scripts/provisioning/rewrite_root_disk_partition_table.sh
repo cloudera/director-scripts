@@ -20,7 +20,7 @@ set -o pipefail
 set -x
 
 # Just use resize2fs if this is a paravirtual VM and exit.
-if [ "$VIRTUALIZATION_TYPE" = "paravirtual" ]; then
+if [ "$VIRTUALIZATION_TYPE" = "pv" ]; then
     resize2fs $(sudo mount | grep "on / type" | awk '{ print $1 }')
     exit 0
 fi
@@ -36,7 +36,20 @@ df -h
 ROOT_PARTITION_DEVICE=$(findmnt -n --evaluate -o SOURCE --target /)
 ROOT_DEVICE=$(echo $ROOT_PARTITION_DEVICE | sed -e "s/[0-9]*$//")
 
-# Detect if the root parition is GPT or MBR (the strategy is different)
+# If the root partition is already using 95% or more of the root device skip the resize operation
+
+ROOT_DEVICE_SIZE=$(blockdev --getsize64 ${ROOT_DEVICE})
+ROOT_PARTITION_SIZE=$(blockdev --getsize64 ${ROOT_PARTITION_DEVICE})
+
+USAGE_PERCENTAGE=$((${ROOT_PARTITION_SIZE} * 100 / ${ROOT_DEVICE_SIZE}))
+
+if [ "${USAGE_PERCENTAGE}" -gt "95" ]; then
+    echo "No resize needed. The root disk partition already has the desired size"
+    # http://www.tldp.org/LDP/abs/html/exitcodes.html
+    exit 0
+fi
+
+# Detect if the root partition is GPT or MBR (the strategy is different)
 
 if ! (fdisk -l "${ROOT_DEVICE}" 2>/dev/null | grep -q -i 'GPT'); then
 
@@ -44,7 +57,7 @@ if ! (fdisk -l "${ROOT_DEVICE}" 2>/dev/null | grep -q -i 'GPT'); then
 
     ROOT_PARTITION="${ROOT_DEVICE}1"
     PARTITION_INFO=$(echo p | fdisk -l "${ROOT_DEVICE}" | grep "${ROOT_PARTITION}")
-    TOGGLE_BOOTABLE_IF_NEEDED=$(echo $PARTITION_INFO | grep -q '*' && echo "echo a; echo 1")
+    TOGGLE_BOOTABLE_IF_NEEDED=$(echo "$PARTITION_INFO" | grep -q '*' && echo "echo a; echo 1")
     START_BLOCK=$(echo $PARTITION_INFO | awk '{if (NF == 7){print $3} else {print $2}}')
     START_SECTOR=$( (echo x; echo p) | fdisk "${ROOT_DEVICE}" 2>/dev/null | grep -e "^ 1" | awk '{print $9}')
     CHANGE_START_SECTOR="echo x; echo b; echo 1; echo $START_SECTOR"
@@ -58,12 +71,24 @@ if ! (fdisk -l "${ROOT_DEVICE}" 2>/dev/null | grep -q -i 'GPT'); then
 
 else
 
-    # GPT partitions require gdisk for resizing as documented here:
-    # http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/storage_expand_partition.html#part-resize-gdisk
+    # GPT partitions require gdisk for resizing.
 
-    PARTITION_GUID=$(echo p | gdisk "${ROOT_DEVICE}" | grep GUID | awk '{ print $4 }')
-    (echo o; echo Y; echo n; echo 1; echo 2048; echo ''; echo 'EF00'; \
-     echo c; echo ''; echo x; echo g; echo "${PARTITION_GUID}"; echo w; echo Y) | gdisk "${ROOT_DEVICE}"
+    # Get first non-BIOS boot (filesystem EF02) partition
+    PARTITION_INFO=$(sgdisk -p ${ROOT_DEVICE} | grep "^\\s*[[:digit:]]" | grep -vi EF02 | head -n 1)
+
+    # Get partition number, starting sector, and filesystem of the first non-BIOS boot partition
+    PARTITION_NUMBER=$(echo ${PARTITION_INFO} | cut -d' ' -f 1)
+    STARTING_SECTOR=$(echo ${PARTITION_INFO} | cut -d' ' -f 2)
+    FILESYSTEM=$(echo ${PARTITION_INFO} | cut -d' ' -f 6)
+
+    PARTITION_GUID_INFO=$(sgdisk -i ${PARTITION_NUMBER} ${ROOT_DEVICE} | grep "unique GUID")
+    PARTITION_GUID=$(echo ${PARTITION_GUID_INFO##*:})
+    PARTITION_NAME_INFO=$(sgdisk -i ${PARTITION_NUMBER} ${ROOT_DEVICE} | grep "Partition name")
+    PARTITION_NAME=$(echo ${PARTITION_NAME_INFO##*:} | sed -e "s/^'//" -e "s/'$//" -e "s/\"/\\\"/g"  -e "s/\"/\\\\\"/g")
+
+    sgdisk -d ${PARTITION_NUMBER} -n ${PARTITION_NUMBER}:${STARTING_SECTOR}:0 \
+           -c ${PARTITION_NUMBER}:"${PARTITION_NAME}" -u ${PARTITION_NUMBER}:${PARTITION_GUID} \
+           -t ${PARTITION_NUMBER}:${FILESYSTEM} ${ROOT_DEVICE}
 
 fi
 

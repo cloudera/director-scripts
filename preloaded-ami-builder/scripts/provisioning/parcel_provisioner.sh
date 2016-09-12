@@ -15,7 +15,7 @@
 # limitations under the License.
 
 # For this script to work properly, you need to supply a URL to a parcel file,
-# e.g. http://archive-primary.cloudera.com/cdh5/parcels/5.5.0/CDH-5.5.0-1.cdh5.5.0.p0.8-wheezy.parcel
+# e.g. http://archive-primary.cloudera.com/cdh5/parcels/5.7.0/CDH-5.7.0-1.cdh5.7.0.p0.45-el7.parcel
 
 # You can do this one of two ways:
 # 1. Set a PARCEL_URL environment variable.
@@ -24,7 +24,7 @@
 # This script will have to be re-run for each parcel you want to cache on the
 # image that you are building.
 
-if [ -z ${PARCEL_URL+set} ]
+if [ -z "${PARCEL_URL+set}" ]
 then
   if [ "$#" -ne 1 ]
   then
@@ -45,20 +45,30 @@ PARCEL_NAME="${PARCEL_URL##*/}"
 
 echo "Downloading parcel from $PARCEL_URL"
 sudo curl "${PARCEL_URL}" -o "/opt/cloudera/parcel-repo/$PARCEL_NAME"
-sudo curl "${PARCEL_URL}.sha1" -o "/opt/cloudera/parcel-repo/$PARCEL_NAME.sha"
+sudo curl "${PARCEL_URL}.sha1" -o "/opt/cloudera/parcel-repo/$PARCEL_NAME.sha1"
+
+echo "Verifying parcel checksum"
+sudo sed "s/$/ ${PARCEL_NAME}/" "/opt/cloudera/parcel-repo/$PARCEL_NAME.sha1" |
+  sudo tee "/opt/cloudera/parcel-repo/$PARCEL_NAME.sha" > /dev/null
+if ! eval "cd /opt/cloudera/parcel-repo && sha1sum -c \"$PARCEL_NAME.sha\""; then
+  echo "Checksum verification failed"
+  exit 1
+fi
 
 for parcel_path in /opt/cloudera/parcel-repo/*.parcel
 do
-    sudo ln "$parcel_path" "/opt/cloudera/parcel-cache/$(basename $parcel_path)"
+    sudo ln "$parcel_path" "/opt/cloudera/parcel-cache/$(basename "$parcel_path")"
 done
+sudo chown -R cloudera-scm:cloudera-scm /opt/cloudera
 
 if [ "$PREEXTRACT_PARCEL" = true ]
 then
   echo "Preextracting parcels..."
   sudo tar zxf "/opt/cloudera/parcel-repo/$PARCEL_NAME" -C "/opt/cloudera/parcels"
   sudo ln -s "$(ls -1 /opt/cloudera/parcels)" /opt/cloudera/parcels/CDH
+  sudo touch /opt/cloudera/parcels/CDH/.dont_delete
   echo "Done"
 fi
 
-echo "Sleeping for 300 seconds to ensure parcels will properly sync with AWS."
+echo "Sleeping for 300 seconds to ensure parcels will properly sync with EBS."
 sleep 300

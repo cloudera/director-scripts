@@ -8,9 +8,11 @@
         "subnet_id": "",
         "security_group_id": "",
         "ami_prefix": "",
-        "ami_virtualization_type": "paravirtual",
-        "root_device_name": "/dev/sda",
-        "ssh_username": "ec2-user",
+        "ami_virtualization_type": "",
+        "root_device_name": "",
+        "ssh_username": "",
+        "associate_public_ip_address": "false",
+        "java_version": "",
         "preextract_parcel": "false"
     },
     "builders": [
@@ -32,12 +34,22 @@
         "subnet_id": "{{user `subnet_id`}}",
         "security_group_id": "{{user `security_group_id`}}",
         "ssh_pty": "true",
-        "ssh_private_ip": "false"
+        "ssh_private_ip": "false",
+        "associate_public_ip_address": "{{user `associate_public_ip_address`}}"
     }],
     "provisioners": [
     {
         "type": "shell",
         "inline": "sudo yum install --assumeyes gdisk"
+    },
+    {
+        "type": "file",
+        "source": "scripts/provisioning/internal/",
+        "destination": "/tmp"
+    },
+    {
+        "type": "shell",
+        "inline": "shopt -s nullglob; for s in /tmp/internal*.sh; do bash \"$s\"; done"
     },
     {
         "type": "shell",
@@ -51,11 +63,23 @@
         "inline": "sudo reboot"
     },
     {
+        "type": "file",
+        "source": "scripts/provisioning/service_control.sh",
+        "destination": "/tmp/service_control.sh",
+        "pause_before": "120s"
+    },
+    {
+        "type": "file",
+        "source": "files/jce/",
+        "destination": "/tmp"
+    },
+    {
         "type": "shell",
-        "scripts": ["scripts/provisioning/rhel6_provisioner.sh",
+        "scripts": ["scripts/provisioning/rhel_provisioner.sh",
+                    "scripts/provisioning/setup_unlimited_strength_jce.sh",
                     "scripts/provisioning/parcel_provisioner.sh"],
         "environment_vars": ["PARCEL_URL={{user `parcel_url`}}", "CM_REPOSITORY_URL={{user `cm_repository_url`}}",
-                             "PREEXTRACT_PARCEL={{user `preextract_parcel`}}"],
-        "pause_before": "120s"
+                             "JAVA_VERSION={{user `java_version`}}",
+                             "PREEXTRACT_PARCEL={{user `preextract_parcel`}}"]
     }]
 }

@@ -5,6 +5,14 @@
 #
 
 #
+# WARNING
+#
+# - It is assumed that the Azure nameserver IP address will always be `168.63.129.16`. See more
+#   info: https://blogs.msdn.microsoft.com/mast/2015/05/18/what-is-the-ip-address-168-63-129-16/.
+#
+
+
+#
 # Setup
 #
 if ! [ "$(id -u)" = 0 ]

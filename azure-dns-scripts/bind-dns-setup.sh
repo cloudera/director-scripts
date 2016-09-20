@@ -1,6 +1,23 @@
 #!/bin/sh
 
 #
+# This script will walk you through setting up BIND on the host and making the changes needed in
+# Azure portal.
+#
+
+#
+# WARNING
+#
+# - This script only creates one zone file which supports <= 255 hosts. It has not been tested
+#   with > 255 hosts trying to use the same zone file. It "might just work", or it may require
+#   manually configuring additional zone files in `/etc/named/named.conf.local` and
+#   `/etc/named/zones/`.
+# - It is assumed that the Azure nameserver IP address will always be `168.63.129.16`. See more
+#   info: https://blogs.msdn.microsoft.com/mast/2015/05/18/what-is-the-ip-address-168-63-129-16/.
+#
+
+
+#
 # Setup
 #
 if ! [ "$(id -u)" = 0 ]
@@ -69,6 +86,11 @@ touch /etc/named/zones/db.reverse
 echo ""
 printf "Enter the internal host FQDN suffix you wish to use for your cluster network (e.g. cdh-cluster.internal): "
 read -r internal_fqdn_suffix
+
+while [ -z "$internal_fqdn_suffix" ]; do
+    printf "You must enter the internal host FQDN suffix you wish to use for your cluster network (e.g. cdh-cluster.internal): "
+    read -r internal_fqdn_suffix
+done
 
 hostname=$(hostname -s)
 

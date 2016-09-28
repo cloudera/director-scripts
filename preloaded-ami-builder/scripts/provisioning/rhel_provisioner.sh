@@ -44,34 +44,63 @@ else
 fi
 service_control nscd enable
 
+if [ -f /etc/selinux/config ]; then
+  # Disable SELinux, as it doesn't play nicely with Cloudera Manager
+  echo "Disabling SELinux"
+  sudo sed -e 's/^SELINUX=enforcing/SELINUX=disabled/' -i /etc/selinux/config
+  sudo sed -e 's/^SELINUX=permissive/SELINUX=disabled/' -i /etc/selinux/config
+  sudo setenforce 0
+fi
+
+# Start Cloudera Manager service to pre-initialize
+echo "Starting Cloudera Manager services"
+service_control cloudera-scm-server-db start
+service_control cloudera-scm-server start
+
+echo "Waiting for 5 minutes for Cloudera Manager to start successfully"
+n=10
+while (( n > 0 ))
+do
+  curl -s -m 10 http://localhost:7180 &> /dev/null && break
+  n=$((n-1))
+  sleep 30
+done
+if (( n == 0 )); then
+    echo "Timed out waiting for Cloudera Manager to start"
+else
+    echo "Cloudera Manager started successfully"
+fi
+
 # Since service_control.sh was sourced, USE_SYSTEMCTL is set
+# Prepare oneshot service or init script to reset CM UUID on restart
+sudo mkdir -p /etc/cloudera-scm-server/
 if [[ $USE_SYSTEMCTL == 1 ]]; then
-  echo "CM optimization not yet supported under systemd"
-  echo "Please do so in an instance template bootstrap script"
+
+  echo "Preparing oneshot service to reset Cloudera Manager UUID"
+
+  service_uuid="$(uuidgen)"
+  cm_uuid_reset_service="/etc/systemd/system/cm-uuid-reset-${service_uuid}.service"
+  cm_uuid_reset_marker="/etc/cloudera-scm-server/uuid_reset"
+  sudo bash <<SEOF
+cat > "$cm_uuid_reset_service" <<"EOF"
+[Unit]
+Description=Reset Cloudera SCM Server UUID on first boot
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c "[ ! -f $cm_uuid_reset_marker ] && echo \$(uuidgen) > /etc/cloudera-scm-server/uuid || true"
+ExecStartPost=/bin/sh -c "touch $cm_uuid_reset_marker"
+
+[Install]
+WantedBy=multi-user.target
+EOF
+SEOF
+
+  sudo systemctl enable "cm-uuid-reset-${service_uuid}"
+
 else
 
-  # Start/Stop Cloudera Manager service
-  echo "Starting Cloudera Manager services"
-  service_control cloudera-scm-server-db start
-  service_control cloudera-scm-server start
-
-  echo "Waiting for 5 minutes for Cloudera Manager to start successfully"
-  n=10
-  while (( n > 0 ))
-  do
-    curl http://localhost:7180 &> /dev/null && break
-    n=$((n-1))
-    sleep 30
-  done
-  if (( n == 0 )); then
-      echo "Timed out waiting for Cloudera Manager to start"
-  else
-      echo "Cloudera Manager started successfully"
-  fi
-
-  # Prepare init script to reset CM UUID on restart
   echo "Preparing init script to reset Cloudera Manager UUID"
-  sudo mkdir -p /etc/cloudera-scm-server/
 
   cm_uuid_reset_file=/etc/init.d/cm-uuid-reset-$(uuidgen)
   sudo bash <<SEOF
@@ -94,14 +123,6 @@ SEOF
 
   sudo chmod 755 "$cm_uuid_reset_file"
   sudo chkconfig --add "$cm_uuid_reset_file"
-fi
-
-if [ -f /etc/selinux/config ]; then
-  # Disable SELinux, as it doesn't play nicely with Cloudera Manager
-  echo "Disabling SELinux"
-  sudo sed -e 's/^SELINUX=enforcing/SELINUX=disabled/' -i /etc/selinux/config
-  sudo sed -e 's/^SELINUX=permissive/SELINUX=disabled/' -i /etc/selinux/config
-  sudo setenforce 0
 fi
 
 # Make sure iptables / firewalld is disabled so that we can properly access Cloudera Manager

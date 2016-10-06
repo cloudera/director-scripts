@@ -46,14 +46,16 @@ PARCEL_NAME="${PARCEL_URL##*/}"
 echo "Downloading parcel from $PARCEL_URL"
 sudo curl -s -S "${PARCEL_URL}" -o "/opt/cloudera/parcel-repo/$PARCEL_NAME"
 sudo curl -s -S "${PARCEL_URL}.sha1" -o "/opt/cloudera/parcel-repo/$PARCEL_NAME.sha1"
+sudo cp "/opt/cloudera/parcel-repo/$PARCEL_NAME.sha1" "/opt/cloudera/parcel-repo/$PARCEL_NAME.sha"
 
 echo "Verifying parcel checksum"
-sudo sed "s/$/ ${PARCEL_NAME}/" "/opt/cloudera/parcel-repo/$PARCEL_NAME.sha1" |
-  sudo tee "/opt/cloudera/parcel-repo/$PARCEL_NAME.sha" > /dev/null
-if ! eval "cd /opt/cloudera/parcel-repo && sha1sum -c \"$PARCEL_NAME.sha\""; then
+sudo sed "s/$/  ${PARCEL_NAME}/" "/opt/cloudera/parcel-repo/$PARCEL_NAME.sha1" |
+  sudo tee "/opt/cloudera/parcel-repo/$PARCEL_NAME.shacheck" > /dev/null
+if ! eval "cd /opt/cloudera/parcel-repo && sha1sum -c \"$PARCEL_NAME.shacheck\""; then
   echo "Checksum verification failed"
   exit 1
 fi
+sudo rm "/opt/cloudera/parcel-repo/$PARCEL_NAME.shacheck"
 
 for parcel_path in /opt/cloudera/parcel-repo/*.parcel
 do

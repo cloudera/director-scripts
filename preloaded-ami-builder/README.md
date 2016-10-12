@@ -73,9 +73,9 @@ Either export the `PACKER_VARS` environment variable before running, or set it a
 Instead of putting the variables into the environment variable directly, you can create a JSON file containing them:
 
     {
-        'vpc_id': 'vpc-12345678',
-        'subnet_id': 'subnet-12345678',
-        'security_group_id': 'sg-1235678'
+        "vpc_id": "vpc-12345678",
+        "subnet_id": "subnet-12345678",
+        "security_group_id": "sg-1235678"
     }
 
 Then, refer to that file instead.

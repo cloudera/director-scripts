@@ -99,9 +99,9 @@ Remember that you do not need to include this argument unless the base AMI lists
 
 ### Internal scripts
 
-To perform more work beyond what the included provisioning scripts do, you can place your own scripts under scripts/provisioning/internal. Each script there is copied up to /tmp on the Packer build instance and executed, in no specific order, immediately after the instance is launched. Use an internal script as a hook for necessary custom work.
+To perform more work beyond what the included provisioning scripts do, you can place your own scripts and supporting files under scripts/provisioning/internal. Each file in that directory is copied up to /tmp on the Packer build instance, and then the scripts whose names match the pattern "internal*.sh" are executed, in arbitrary order. Internal scripts are run before any other scripts in the AMI generation process.
 
-For example, say you need to add lines to /etc/hosts to allow resolution of particular DNS names. An internal script can perform that work.
+Use an internal script as a hook for necessary custom work. For example, say you need to add lines to /etc/hosts to allow resolution of particular DNS names. An internal script can take care of that.
 
     #!/usr/bin/env bash
     getent ahosts customhost.mydomain.example || \

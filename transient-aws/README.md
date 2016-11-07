@@ -51,7 +51,7 @@ You can complete the next few sections (everything except the last step) in a ne
   Note:  make sure to use your newly created AMI ID for all the AMI IDs
 - Replace the SSH_USERNAME in hive-example/dispatch.sh to match the AMI SSH username
 - Replace the 'centos' username in hive-example/hive_job.sh to match the AMI SSH username
-- If not using preloaded AMIs, use hive-example/cluster_bare_amis.conf instead and update hive/run_all.sh to point to cluster.conf.
+- If not using preloaded AMIs, use hive-example/cluster_bare_amis.conf instead and update hive-example/run_all.sh to point to cluster_bare_amis.conf.
 
 ### Prepare the Hive Query
 - Open hive-example/query.sql and update the query or use the sample one.

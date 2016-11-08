@@ -72,5 +72,6 @@ then
   echo "Done"
 fi
 
-echo "Sleeping for 300 seconds to ensure parcels will properly sync with EBS."
-sleep 300
+echo "Sync Linux volumes with EBS."
+sudo sync
+sleep 5

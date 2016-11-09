@@ -34,10 +34,10 @@ The build-ami.sh script has two required arguments and three optional arguments.
   automatically.
 * (Optional) The CDH parcel URL. This script will download a parcel from this URL to preload and
   possibly pre-extract onto the new AMI. This argument defaults to
-  http://archive.cloudera.com/cdh5/parcels/5.7/.
+  http://archive.cloudera.com/cdh5/parcels/5.9/.
 * (Optional) The Cloudera Manager yum repository URL. This script will download and install
   Cloudera Manager from packages at this URL onto the new AMI. This argument defaults to
-  http://archive.cloudera.com/cm5/redhat/7/x86_64/cm/5.7/.
+  http://archive.cloudera.com/cm5/redhat/7/x86_64/cm/5.9/.
 
 The URLs together determine the version of Cloudera Manager and CDH available on the AMI. Be sure that the version indicated in the parcel URL is not later than the version indicated in the Cloudera Manager URL; that is, Cloudera Manager cannot work with CDH versions newer than itself.
 
@@ -169,3 +169,42 @@ If parcels are pre-extracted by using the `-p` option, then the DISTRIBUTION pha
 #### Preloading parcels and EBS prewarming
 
 When a block on an Amazon EBS volume is accessed for the first time, significant latency occurs due to the way EBS volumes are implemented. This has an impact on parcel extraction, even with parcel preloading. Director will [prewarm](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-prewarm.html) the parcel in order to speed up file system access to the parcel file. However, the extraction will still take some time as a result.
+
+## Faster Bootstrap for Cloudera Manager (experimental)
+
+Versions of Cloudera Manager starting with 5.9 include an *experimental* "Faster Bootstrap" capability. Enabling it can help Cloudera Manager to bootstrap clusters a few minutes faster.
+
+To enable Faster Bootstrap, include the Cloudera Manager configuration properties "enable_faster_bootstrap" and "enable_fast_dir_create", each with a value of "true". A Cloudera Director configuration file includes the properties in the top-level "cloudera-manager" section, like this:
+
+    ...
+    cloudera-manager {
+      ...
+      configs {
+          CLOUDERA_MANAGER {
+            enable_faster_bootstrap: true
+            enable_fast_dir_create: true
+          }
+      }
+      ...
+    }
+    ...
+
+See the [sample configuration file for Faster Bootstrap](../configs/aws.fb.conf) for a complete example.
+
+In the Cloudera Director web UI, the properties are specified for a new deployment by pressing the "Cloudera Manager Configurations" button, selecting "Cloudera Manager" for the Scope, and entering the property names and values in the provided table.
+
+*Be sure to set both configuration properties to true.* Do not set one and not the other, or else Cloudera Manager may fail to bootstrap the cluster. Either set both to true or set both to false. Their default values are both false.
+
+Faster Bootstrap only works for Cloudera Manager starting with version 5.9. If the properties are included in the configuration for an older version of Cloudera Manager, then deployment bootstrap will fail.
+
+### Limitations
+
+If a cluster satisfies any of the following conditions, Faster Bootstrap is either not in full effect, or is not in effect at all.
+
+* the cluster is highly available (HA)
+* Impala is included as a cluster service
+* Kafka is included as a cluster service
+
+### Subject to Change
+
+The Faster Bootstrap capability in Cloudera Manager is experimental. The means of activating it, and its limitations, are subject to change in future releases of Cloudera Director and Cloudera Manager.

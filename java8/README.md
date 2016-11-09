@@ -44,5 +44,5 @@ instances {
 Alternatively, you can copy the contents of the bootstrap script itself and use the `bootstrapScript`
 property instead.
 
-**NOTE**: The URL in this script refers to CentOS/RHEL 7 and Director 2.1.0. You may need to update the URL
+**NOTE**: The URL in this script refers to CentOS/RHEL 7 and Director 2.2.0. You may need to update the URL
 for CentOS/RHEL 6 depending on what OS your deployment/cluster instances are running.

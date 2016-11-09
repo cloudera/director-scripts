@@ -58,9 +58,9 @@ Director looks for a CDH parcel in the CDH parcel repository specified in the cl
 
 * http://archive.cloudera.com/cdh5/parcels/5.7.0/ contains parcels for CDH version 5.7.0.
 * http://archive.cloudera.com/cdh5/parcels/5.7/ contains parcels for the latest version of CDH 5.7, such as version 5.7.4.
-* http://archive.cloudera.com/cdh5/parcels/5/ contains parcels for the latest version of CDH 5, such as version 5.8.2.
+* http://archive.cloudera.com/cdh5/parcels/5/ contains parcels for the latest version of CDH 5, such as version 5.9.0.
 
-The choice of parcel repository influences the CDH versions that Director can satisfactorily match. A repository for CDH 5.7.0 can be used for matching versions 5.7.0, 5.7, and 5. A repository for CDH 5 can always match version 5; today it may also match CDH 5.8, but in the future may match 5.9 instead, when that new version is released.
+The choice of parcel repository influences the CDH versions that Director can satisfactorily match. A repository for CDH 5.7.0 can be used for matching versions 5.7.0, 5.7, and 5. A repository for CDH 5 can always match version 5; today it may also match CDH 5.9, but in the future may match 5.10 instead, when that new version is released.
 
 Once Director locates a satisfactory parcel version, it requests that precise CDH version (x.y.z) for the cluster that it instructs Cloudera Manager to establish. Under normal circumstances, Cloudera Manager downloads the desired parcel, distributes it to the cluster nodes, and extracts it there.
 

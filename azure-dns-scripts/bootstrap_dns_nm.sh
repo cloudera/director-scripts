@@ -46,4 +46,3 @@ exit 0;
 EOF
 chmod 755 /etc/NetworkManager/dispatcher.d/12-register-dns
 service network restart
-

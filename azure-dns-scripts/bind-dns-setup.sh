@@ -3,6 +3,15 @@
 #
 # This script will walk you through setting up BIND on the host and making the changes needed in
 # Azure portal.
+# This script will bootstrap these OSes:
+#   - CentOS 6.7
+#   - CentOS 7.2
+#   - RHEL 6.7
+#   - RHEL 7.2
+#
+# Notes and notible differences between OSes:
+#   - CentOS 6.7 and RHEL 6.7 use dhclient
+#   - CentOS 7.2 and RHEL 7.2 use NetworkManager
 #
 
 #
@@ -18,106 +27,102 @@
 
 
 #
-# Setup
-#
-if ! [ "$(id -u)" = 0 ]
-  then echo "Please run as root."
-  exit 1
-fi
-
-
-#
 # Microsoft Azure Assumptions
 #
 nameserver_ip="168.63.129.16" # used for all regions
 
 
-echo "-- STOP --"
-echo "This script will turn a fresh host into a BIND server and walk you through changing Azure DNS "
-echo "settings. If you have previously run this script on this host, or another host within the same "
-echo "virtual network: stop running this script and run the reset script before continuing."
-printf "Press [Enter] to continue."
-read -r
+#
+# Functions
+#
 
 #
-# Quick sanity checks
+# This function does the install and setup for BIND
 #
-hostname -f
-if [ $? != 0 ]
-then
-    echo "Unable to run the command 'hostname -f'; run the reset script and try again."
-    exit 1
-fi
+base_beginning() {
+    echo "-- STOP --"
+    echo "This script will turn a fresh host into a BIND server and walk you through changing Azure DNS "
+    echo "settings. If you have previously run this script on this host, or another host within the same "
+    echo "virtual network: stop running this script and run the reset script before continuing."
+    printf "Press [Enter] to continue."
+    read -r
 
-hostname -i
-if [ $? != 0 ]
-then
-    echo "Unable to run the command 'hostname -i'; run the reset script and try again."
-    exit 1
-fi
+    #
+    # Quick sanity checks
+    #
+    if ! hostname -f
+    then
+        echo "Unable to run the command 'hostname -f'; run the reset script and try again."
+        exit 1
+    fi
 
-#
-# Install and setup the prerequisites
-#
-sudo yum -y install bind bind-utils
-yum list installed bind
-if [ $? != 0 ]
-then
-    echo "Unable to install package 'bind', manual troubleshoot required."
-    exit 1
-fi
-yum list installed bind-utils
-if [ $? != 0 ]
-then
-    echo "Unable to install package 'bind-utils', manual troubleshoot required."
-    exit 1
-fi
+    hostname -i
+    if ! hostname -i
+    then
+        echo "Unable to run the command 'hostname -i'; run the reset script and try again."
+        exit 1
+    fi
 
-# make the directories that bind will use
-mkdir /etc/named/zones
-# make the files that bind will use
-touch /etc/named/named.conf.local
-touch /etc/named/zones/db.internal
-touch /etc/named/zones/db.reverse
+    #
+    # Install and setup the prerequisites
+    #
+    sudo yum -y install bind bind-utils
+    if ! yum list installed bind
+    then
+        echo "Unable to install package 'bind', manual troubleshoot required."
+        exit 1
+    fi
+    if ! yum list installed bind-utils
+    then
+        echo "Unable to install package 'bind-utils', manual troubleshoot required."
+        exit 1
+    fi
 
-#
-# Set all of the variables
-#
-echo ""
-printf "Enter the internal host FQDN suffix you wish to use for your cluster network (e.g. cdh-cluster.internal): "
-read -r internal_fqdn_suffix
+    # make the directories that bind will use
+    mkdir /etc/named/zones
+    # make the files that bind will use
+    touch /etc/named/named.conf.local
+    touch /etc/named/zones/db.internal
+    touch /etc/named/zones/db.reverse
 
-while [ -z "$internal_fqdn_suffix" ]; do
-    printf "You must enter the internal host FQDN suffix you wish to use for your cluster network (e.g. cdh-cluster.internal): "
+    #
+    # Set all of the variables
+    #
+    echo ""
+    printf "Enter the internal host FQDN suffix you wish to use for your cluster network (e.g. cdh-cluster.internal): "
     read -r internal_fqdn_suffix
-done
 
-hostname=$(hostname -s)
+    while [ -z "$internal_fqdn_suffix" ]; do
+        printf "You must enter the internal host FQDN suffix you wish to use for your cluster network (e.g. cdh-cluster.internal): "
+        read -r internal_fqdn_suffix
+    done
 
-internal_ip=$(hostname -i)
+    hostname=$(hostname -s)
 
-subnet=$(ipcalc -np "$(ip -o -f inet addr show | awk '/scope global/ {print $4}')" | awk '{getline x;print x;}1' | awk -F= '{print $2}' | awk 'NR%2{printf "%s/",$0;next;}1')
+    internal_ip=$(hostname -i)
 
-ptr_record_prefix=$(hostname -i | awk -F. '{print $3"." $2"."$1}')
+    subnet=$(ipcalc -np "$(ip -o -f inet addr show | awk '/scope global/ {print $4}')" | awk '{getline x;print x;}1' | awk -F= '{print $2}' | awk 'NR%2{printf "%s/",$0;next;}1')
 
-hostnumber=$(hostname -i | cut -d . -f 4)
+    ptr_record_prefix=$(hostname -i | awk -F. '{print $3"." $2"."$1}')
 
-hostmaster="hostmaster"
+    hostnumber=$(hostname -i | cut -d . -f 4)
+
+    hostmaster="hostmaster"
 
 
-echo "[DEBUG: Variables used]"
-echo "subnet: $subnet"
-echo "internal_ip: $internal_ip"
-echo "internal_fqdn_suffix: $internal_fqdn_suffix"
-echo "ptr_record_prefix: $ptr_record_prefix"
-echo "hostname: $hostname"
-echo "hostmaster: $hostmaster"
-echo "hostnumber: $hostnumber"
-echo "[END DEBUG: Variables used]"
-
+    echo "[DEBUG: Variables used]"
+    echo "subnet: $subnet"
+    echo "internal_ip: $internal_ip"
+    echo "internal_fqdn_suffix: $internal_fqdn_suffix"
+    echo "ptr_record_prefix: $ptr_record_prefix"
+    echo "hostname: $hostname"
+    echo "hostmaster: $hostmaster"
+    echo "hostnumber: $hostnumber"
+    echo "[END DEBUG: Variables used]"
 
 #
 # Create the BIND files
+# Section not indented so EOF works
 #
 
 cat > /etc/named.conf <<EOF
@@ -211,38 +216,106 @@ ${hostnumber}      PTR  ${hostname}.${internal_fqdn_suffix}.
 EOF
 
 
-#
-# Final touches on BIND related items
-#
-chown -R named:named /etc/named*
-named-checkconf /etc/named.conf
-if [ $? != 0 ] # if named-checkconf fails
-then
-    exit 1
-fi
-named-checkzone "${internal_fqdn_suffix}" /etc/named/zones/db.internal
-if [ $? != 0 ] # if named-checkzone fails
-then
-    exit 1
-fi
-named-checkzone "${ptr_record_prefix}.in-addr.arpa" /etc/named/zones/db.reverse
-if [ $? != 0 ] # if named-checkzone fails
-then
-    exit 1
-fi
+    #
+    # Final touches on BIND related items
+    #
+    chown -R named:named /etc/named*
+    if ! named-checkconf /etc/named.conf # if named-checkconf fails
+    then
+        exit 1
+    fi
+    if ! named-checkzone "${internal_fqdn_suffix}" /etc/named/zones/db.internal # if named-checkzone fails
+    then
+        exit 1
+    fi
+    if ! named-checkzone "${ptr_record_prefix}.in-addr.arpa" /etc/named/zones/db.reverse # if named-checkzone fails
+    then
+        exit 1
+    fi
 
-service named start
-chkconfig named on
-#
-# This host is now running BIND
-#
+    service named start
+    chkconfig named on
+
+    #
+    # This host is now running BIND
+    #
+}
 
 
 #
-# Add dhclient-exit-hooks to update the DNS search server
+# This function prompts the person running the script to go to portal.azure.com to change Azure
+# DNS settings then makes sure everything works as expected
 #
+base_end() {
+    #
+    # Now it's time to update Azure DNS settings in portal
+    #
+    echo ""
+    echo "-- STOP -- STOP -- STOP --"
+    echo "Go to -- portal.azure.com -- and change Azure DNS to point to the private IP of this host: ${internal_ip}"
+    printf "Press [Enter] once you have gone to portal.azure.com and this is completed."
+    read -r
 
-# Taken from https://github.com/cloudera/director-scripts/blob/master/azure-dns-scripts/bootstrap_dns.sh
+    #
+    # Loop until DNS nameserver updates have propagated to /etc/resolv.conf
+    # NB: search server updates don't take place until dhclient-exit-hooks have executed
+    #
+    until grep "nameserver ${internal_ip}" /etc/resolv.conf
+    do
+        service network restart
+        echo "Waiting for Azure DNS nameserver updates to propagate, this usually takes less than 2 minutes..."
+        sleep 10
+    done
+
+
+    #
+    # Check that everything is working
+    #
+    echo "Running sanity checks:"
+
+    if ! hostname -f
+    then
+        echo "Unable to run the command 'hostname -f' (check 1 of 4)"
+        echo "Run the reset script and then try this script again."
+        exit 1
+    fi
+
+    if ! hostname -i
+    then
+        echo "Unable to run the command 'hostname -i' (check 2 of 4)"
+        echo "Run the reset script and then try this script again."
+        exit 1
+    fi
+
+    if ! host "$(hostname -f)"
+    then
+        echo "Unable to run the command 'host \`hostname -f\`' (check 3 of 4)"
+        echo "Run the reset script and then try this script again."
+        exit 1
+    fi
+
+    if ! host "$(hostname -i)"
+    then
+        echo "Unable to run the command 'host \`hostname -i\`' (check 4 of 4)"
+        echo "Run the reset script and then try this script again."
+        exit 1
+    fi
+
+    echo ""
+    echo "Everything is working!"
+    exit 0
+}
+
+
+#
+# This function creates the dhclient hooks
+# writing dhclient-exit-hooks is the same for CentOS 6.7 and RHEL 6.7
+# function not indented so EOF works
+#
+dhclient_67()
+{
+
+# dhclient-exit-hooks explained in dhclient-script man page: http://linux.die.net/man/8/dhclient-script
 # cat a here-doc represenation of the hooks to the appropriate file
 cat > /etc/dhcp/dhclient-exit-hooks <<"EOF"
 #!/bin/bash
@@ -275,63 +348,229 @@ exit 0;
 EOF
 chmod 755 /etc/dhcp/dhclient-exit-hooks
 
-#
-# Now it's time to update Azure DNS settings in portal
-#
-echo ""
-echo "-- STOP -- STOP -- STOP --"
-echo "Go to -- portal.azure.com -- and change Azure DNS to point to the private IP of this host: ${internal_ip}"
-printf "Press [Enter] once you have gone to portal.azure.com and this is completed."
-read -r
-
-#
-# Loop until DNS nameserver updates have propagated to /etc/resolv.conf
-# NB: search server updates don't take place until dhclient-exit-hooks have executed
-#
-until grep "nameserver ${internal_ip}" /etc/resolv.conf
-do
-    service network restart
-    echo "Waiting for Azure DNS nameserver updates to propagate, this usually takes less than 2 minutes..."
-    sleep 10
-done
+}
 
 
-#
-# Check that everything is working
-#
-echo "Running sanity checks:"
+centos_67()
+{
+    echo "CentOS 6.7"
 
-hostname -f
-if [ $? != 0 ]
+    base_beginning
+
+    # execute the CentOS 6.7 / RHEL 6.7 dhclient-exit-hooks setup
+    dhclient_67
+
+    base_end
+}
+
+
+rhel_67()
+{
+    echo "RHEL 6.7"
+
+    # rewrite SELINUX config to disabled and turn off enforcement
+    sed -i.bak "s/^SELINUX=.*$/SELINUX=disabled/" /etc/selinux/config
+    setenforce 0
+    # stop firewall and disable
+    service iptables stop
+    chkconfig iptables off
+    # update config to disable IPv6 and disable
+    echo "# Disable IPv6" >> /etc/sysctl.conf
+    echo "net.ipv6.conf.all.disable_ipv6 = 1" >> /etc/sysctl.conf
+    echo "net.ipv6.conf.default.disable_ipv6 = 1" >> /etc/sysctl.conf
+    sysctl -w net.ipv6.conf.all.disable_ipv6=1
+    sysctl -w net.ipv6.conf.default.disable_ipv6=1
+
+    base_beginning
+
+    # execute the CentOS 6.7 / RHEL 6.7 dhclient-exit-hooks setup
+    dhclient_67
+
+    base_end
+}
+
+
+#
+# This function creates the networkmanager hooks
+# writing network manager hooks is the same for CentOS 7.2 and RHEL 7.2
+# function not indented so EOF works
+#
+networkmanager_72()
+{
+# Centos 7.2 and RHEL 7.2 uses NetworkManager. Add a script to be automatically invoked when interface comes up.
+cat > /etc/NetworkManager/dispatcher.d/12-register-dns <<"EOF"
+#!/bin/bash
+# NetworkManager Dispatch script
+# Deployed by Cloudera Director Bootstrap
+#
+# Expected arguments:
+#    $1 - interface
+#    $2 - action
+#
+# See for info: http://linux.die.net/man/8/networkmanager
+
+# Register A and PTR records when interface comes up
+# only execute on the primary nic
+if [ "$1" != "eth0" || "$2" != "up" ]
 then
-    echo "Unable to run the command 'hostname -f' (check 1 of 4)"
-    echo "Run the reset script and then try this script again."
+    exit 0;
+fi
+
+# when we have a new IP, perform nsupdate
+new_ip_address="$DHCP4_IP_ADDRESS"
+
+EOF
+# this is a separate here-doc because there's two sets of variable substitution going on, this set
+# needs to be evaluated when written to the file, the two others (with "EOF" surrounded by quotes)
+# should not have variable substitution occur when creating the file.
+cat >> /etc/NetworkManager/dispatcher.d/12-register-dns <<EOF
+domain=${internal_fqdn_suffix}
+EOF
+cat >> /etc/NetworkManager/dispatcher.d/12-register-dns <<"EOF"
+IFS='.' read -ra ipparts <<< "$new_ip_address"
+ptrrec="$(printf %s "$new_ip_address." | tac -s.)in-addr.arpa"
+nsupdatecmds=$(mktemp -t nsupdate.XXXXXXXXXX)
+resolvconfupdate=$(mktemp -t resolvconfupdate.XXXXXXXXXX)
+echo updating resolv.conf
+grep -iv "search" /etc/resolv.conf > "$resolvconfupdate"
+echo "search $domain" >> "$resolvconfupdate"
+cat "$resolvconfupdate" > /etc/resolv.conf
+exit 0;
+EOF
+chmod 755 /etc/NetworkManager/dispatcher.d/12-register-dns
+}
+
+
+centos_72()
+{
+    echo "CentOS 7.2"
+
+    base_beginning
+
+    # execute the CentOS 7.2 / RHEL 7.2 network manager setup
+    networkmanager_72
+
+    base_end
+}
+
+
+rhel_72()
+{
+    echo "RHEL 7.2"
+
+    # rewrite SELINUX config to disable and turn off enforcement
+    sed -i.bak "s/^SELINUX=.*$/SELINUX=disabled/" /etc/selinux/config
+    setenforce 0
+    # stop firewall and disable
+    systemctl stop iptables
+    systemctl iptables off
+    # RHEL 7.x uses firewalld
+    systemctl stop firewalld
+    systemctl disable firewalld
+    # Disable tuned so it does not overwrite sysctl.conf
+    service tuned stop
+    systemctl disable tuned
+    # Disable chrony so it does not conflict with ntpd installed by Director
+    systemctl stop chronyd
+    systemctl disable chronyd
+    # update config to disable IPv6 and disable
+    echo "# Disable IPv6" >> /etc/sysctl.conf
+    echo "net.ipv6.conf.all.disable_ipv6 = 1" >> /etc/sysctl.conf
+    echo "net.ipv6.conf.default.disable_ipv6 = 1" >> /etc/sysctl.conf
+    # swappniess is set by Director in /etc/sysctl.conf
+    # Poke sysctl to have it pickup the config change.
+    sysctl -p
+
+    base_beginning
+
+    # execute the CentOS 7.2 / RHEL 7.2 network manager setup
+    networkmanager_72
+
+    base_end
+}
+
+
+#
+# Main workflow
+#
+
+# ensure user is root
+if [ "$(id -u)" -ne 0 ]
+then
+    echo "Please run as root."
     exit 1
 fi
 
-hostname -i
-if [ $? != 0 ]
+# find the OS and release
+os=""
+release=""
+
+# if it's there, use lsb_release
+
+if rpm -q redhat-lsb
 then
-    echo "Unable to run the command 'hostname -i' (check 2 of 4)"
-    echo "Run the reset script and then try this script again."
-    exit 1
+    os=$(lsb_release -si)
+    release=$(lsb_release -sr)
+
+# if lsb_release isn't installed, use /etc/redhat-release
+else
+
+    if grep "CentOS.* 6\.7" /etc/redhat-release
+    then
+        os="CentOS"
+        release="6.7"
+    fi
+
+
+    if grep "CentOS.* 7\.2" /etc/redhat-release
+    then
+        os="CentOS"
+        release="7.2"
+    fi
+
+    if grep "Red Hat Enterprise Linux Server release 6.7" /etc/redhat-release
+    then
+        os="RedHatEnterpriseServer"
+        release="6.7"
+    fi
+
+    if grep "Red Hat Enterprise Linux Server release 7.2" /etc/redhat-release
+    then
+        os="RedHatEnterpriseServer"
+        release="7.2"
+    fi
 fi
 
-host "$(hostname -f)"
-if [ $? != 0 ]
+echo "OS: $os $release"
+
+# select the OS and run the appropriate setup script
+not_supported_msg="OS $os $release is not supported."
+if [ "$os" = "CentOS" ]
 then
-    echo "Unable to run the command 'host \`hostname -f\`' (check 3 of 4)"
-    echo "Run the reset script and then try this script again."
+    if [ "$release" = "6.7" ]
+    then
+        centos_67
+    elif [ "$release" = "7.2" ]
+    then
+        centos_72
+    else
+        echo not_supported_msg
+        exit 1
+    fi
+
+elif [ "$os" = "RedHatEnterpriseServer" ]
+then
+    if [ "$release" = "6.7" ]
+    then
+        rhel_67
+    elif [ "$release" = "7.2" ]
+    then
+        rhel_72
+    else
+        echo not_supported_msg
+        exit 1
+    fi
+else
+    echo not_supported_msg
     exit 1
 fi
-
-host "$(hostname -i)"
-if [ $? != 0 ]
-then
-    echo "Unable to run the command 'host \`hostname -i\`' (check 4 of 4)"
-    echo "Run the reset script and then try this script again."
-    exit 1
-fi
-
-echo "Everything is working!"
-exit 0

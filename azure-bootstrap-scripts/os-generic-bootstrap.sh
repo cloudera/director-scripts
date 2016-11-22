@@ -240,15 +240,10 @@ else
     fi
 fi
 
-# debug
-echo $os
-echo $release
-
-
-# shellcheck disable=SC2034
-not_supported_msg="OS $os $release is not supported."
+echo "OS: $os $release"
 
 # select the OS and run the appropriate setup script
+not_supported_msg="OS $os $release is not supported."
 if [ "$os" = "CentOS" ]; then
     if [ "$release" = "6.7" ]; then
         centos_67

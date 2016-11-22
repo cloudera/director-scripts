@@ -14,6 +14,8 @@ These scripts assume there is a DNS server already setup with proper zone files 
 
 ## BIND setup scripts
 
+_Note: These scripts will bootstrap CentOS 6.7, CentOS 7.2, RHEL 6.7, and RHEL 7.2_
+
 * `bind-dns-setup.sh`: This is the BIND setup script that will turn a newly created VM into a BIND server and walk you through changing Azure DNS settings. This script assumes it's running on a newly provisioned VM, or that `bind-dns-reset.sh` has been executed.
 * `bind-dns-reset.sh`: This is the reset script that will walk you through resetting a host's DNS settings back to default so that you can run `bind-dns-setup.sh` agian.
 

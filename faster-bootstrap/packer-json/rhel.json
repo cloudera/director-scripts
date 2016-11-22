@@ -3,6 +3,7 @@
         "region": "",
         "parcel_url": "",
         "cm_repository_url": "",
+        "jdk_repository_url": "",
         "ami": "",
         "vpc_id": "",
         "subnet_id": "",
@@ -80,6 +81,7 @@
                     "scripts/provisioning/parcel_provisioner.sh"],
         "environment_vars": ["PARCEL_URL={{user `parcel_url`}}", "CM_REPOSITORY_URL={{user `cm_repository_url`}}",
                              "JAVA_VERSION={{user `java_version`}}",
+                             "JDK_REPOSITORY_URL={{user `jdk_repository_url`}}",
                              "PREEXTRACT_PARCEL={{user `preextract_parcel`}}"]
     }]
 }

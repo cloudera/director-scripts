@@ -16,12 +16,14 @@
 
 case $JAVA_VERSION in
   1.7)
+    # Package name for RPM available from Cloudera Manager repo
     JAVA_PACKAGE=oracle-j2sdk1.7
     JAVA_PREFIX="/usr/java/jdk1.7"
     POLICY_ZIP="UnlimitedJCEPolicyJDK7.zip"
     ;;
   1.8)
-    JAVA_PACKAGE=oracle-j2sdk1.8
+    # Package name for RPM available from Cloudera Director repo
+    JAVA_PACKAGE=jdk1.8.0_60
     JAVA_PREFIX="/usr/java/jdk1.8"
     POLICY_ZIP="jce_policy-8.zip"
     ;;

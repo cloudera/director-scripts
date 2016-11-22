@@ -57,6 +57,9 @@ OPTIONS:
   -j <version>
     Install a specific Java version
         Valid choices: 1.7 (default), 1.8
+  -J <jdk-repository>
+    Yum repo to use for JDK RPM
+        Valid choices: Director (default), CM
   -p
     Pre-extract CDH parcels
   -P
@@ -100,22 +103,42 @@ get_parcel_url()
       echo "${cdh_url}$(curl -s "${cdh_url}" | grep "el7.parcel<" | sed -E "s/.*>(.*parcel)<\/a.*/\1/" 2>/dev/null)"
       ;;
     *)
-      echo "no_parcels_available"
+      echo ""
+      ;;
+  esac
+}
+
+get_director_yum_url() {
+  local os="$1"
+
+  case $os in
+    centos6* | rhel6*)
+      echo "http://archive.cloudera.com/director/redhat/6/x86_64/director/2.2/"
+      ;;
+    centos7* | rhel7*)
+      echo "http://archive.cloudera.com/director/redhat/7/x86_64/director/2.2/"
+      ;;
+    *)
+      echo ""
       ;;
   esac
 }
 
 AMI_OPT=
 JAVA_VERSION=1.7
+JDK_REPO=Director
 PRE_EXTRACT=
 PUBLIC_IP=
-while getopts "a:j:pPh" opt; do
+while getopts "a:j:J:pPh" opt; do
   case $opt in
     a)
       AMI_OPT="$OPTARG"
       ;;
     j)
       JAVA_VERSION="$OPTARG"
+      ;;
+    J)
+      JDK_REPO="$OPTARG"
       ;;
     p)
       PRE_EXTRACT=1
@@ -206,9 +229,35 @@ if [[ -z $JAVA_VERSION_VALID ]]; then
   exit 5
 fi
 
+# Validate JDK repo, set JDK repo URL
+case $JDK_REPO in
+  CM)
+    # Only 1.7 is available
+    if [[ $JAVA_VERSION != "1.7" ]]; then
+      echo "JDK $JAVA_VERSION is not available from the Cloudera Manager repository"
+      echo "Use '-J Director' for JDK $JAVA_VERSION"
+      exit 6
+    fi
+    JDK_REPO_URL="$CM_REPO_URL"
+    ;;
+  Director)
+    # 1.7 and 1.8 are available
+    JDK_REPO_URL=$(get_director_yum_url "$OS")
+    if [[ -z $JDK_REPO_URL ]]; then
+      echo "Cloudera Director yum repo is not available for OS $OS"
+      exit 6
+    fi
+    ;;
+  *)
+    echo "Invalid choice for JDK repo: $JDK_REPO"
+    usage
+    exit 6
+esac
+
 # Set up packer variables
 PACKER_VARS_ARRAY=( $PACKER_VARS )
 PACKER_VARS_ARRAY+=(-var "region=$AWS_REGION" -var "parcel_url=$PARCEL_URL" -var "cm_repository_url=$CM_REPO_URL")
+PACKER_VARS_ARRAY+=(-var "jdk_repository_url=$JDK_REPO_URL")
 PACKER_VARS_ARRAY+=(-var "ami=$AMI" -var "ami_virtualization_type=$VIRTUALIZATION" -var "ssh_username=$USERNAME" -var "root_device_name=$ROOT_DEVICE_NAME")
 PACKER_VARS_ARRAY+=(-var "ami_prefix=$NAME")
 PACKER_VARS_ARRAY+=(-var "java_version=$JAVA_VERSION")

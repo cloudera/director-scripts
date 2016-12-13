@@ -54,6 +54,8 @@ OPTIONS:
     Show this help message
   -a <ami-info>
     Use a specific base AMI
+  -d
+    Run packer in debug mode
   -j <version>
     Install a specific Java version
         Valid choices: 1.7 (default), 1.8
@@ -125,14 +127,18 @@ get_director_yum_url() {
 }
 
 AMI_OPT=
+DEBUG=
 JAVA_VERSION=1.7
 JDK_REPO=Director
 PRE_EXTRACT=
 PUBLIC_IP=
-while getopts "a:j:J:pPh" opt; do
+while getopts "a:dj:J:pPh" opt; do
   case $opt in
     a)
       AMI_OPT="$OPTARG"
+      ;;
+    d)
+      DEBUG=1
       ;;
     j)
       JAVA_VERSION="$OPTARG"
@@ -268,6 +274,12 @@ if [[ -n $PUBLIC_IP ]]; then
   PACKER_VARS_ARRAY+=(-var "associate_public_ip_address=true")
 fi
 
+# Set up other packer options
+PACKER_OPTS=()
+if [[ -n $DEBUG ]]; then
+  PACKER_OPTS+=(-debug)
+fi
+
 JSON=rhel.json
 
-packer build "${PACKER_VARS_ARRAY[@]}" packer-json/"$JSON"
+packer build "${PACKER_VARS_ARRAY[@]}" "${PACKER_OPTS[@]}" packer-json/"$JSON"

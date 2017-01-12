@@ -1,6 +1,22 @@
 #!/bin/sh
 
 #
+# Copyright (c) 2017 Cloudera, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#
 # This script will bootstrap these OSes:
 #   - CentOS 6.7
 #   - CentOS 7.2
@@ -17,9 +33,9 @@
 # Functions
 #
 
-# writing dhclient-exit-hooks is the same for CentOS 6.7 and RHEL 6.7
+# writing dhclient-exit-hooks is the same for CentOS 6.x and RHEL 6.x
 # function not indented so EOF works
-dhclient_67()
+dhclient_6()
 {
 # dhclient-exit-hooks explained in dhclient-script man page: http://linux.die.net/man/8/dhclient-script
 # cat a here-doc represenation of the hooks to the appropriate file
@@ -66,18 +82,18 @@ service network restart
 }
 
 
-centos_67()
+centos_6x()
 {
-    echo "CentOS 6.7"
+    echo "CentOS 6.x"
 
-    # execute the CentOS 6.7 / RHEL 6.7 dhclient-exit-hooks setup
-    dhclient_67
+    # execute the CentOS 6.x / RHEL 6.x dhclient-exit-hooks setup
+    dhclient_6
 }
 
 
-rhel_67()
+rhel_6x()
 {
-    echo "RHEL 6.7"
+    echo "RHEL 6.x"
 
     # rewrite SELINUX config to disabled and turn off enforcement
     sed -i.bak "s/^SELINUX=.*$/SELINUX=disabled/" /etc/selinux/config
@@ -92,14 +108,14 @@ rhel_67()
     sysctl -w net.ipv6.conf.all.disable_ipv6=1
     sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-    # execute the CentOS 6.7 / RHEL 6.7 dhclient-exit-hooks setup
-    dhclient_67
+    # execute the CentOS 6.x / RHEL 6.x dhclient-exit-hooks setup
+    dhclient_6
 }
 
 
 # writing network manager hooks is the same for CentOS 7.2 and RHEL 7.2
 # function not indented so EOF works
-networkmanager_72()
+networkmanager_7()
 {
 # Centos 7.2 and RHEL 7.2 uses NetworkManager. Add a script to be automatically invoked when interface comes up.
 cat > /etc/NetworkManager/dispatcher.d/12-register-dns <<"EOF"
@@ -151,18 +167,18 @@ service network restart
 }
 
 
-centos_72()
+centos_7x()
 {
-    echo "CentOS 7.2"
+    echo "CentOS 7.x"
 
-    # execute the CentOS 7.2 / RHEL 7.2 network manager setup
-    networkmanager_72
+    # execute the CentOS 7.x / RHEL 7.x network manager setup
+    networkmanager_7
 }
 
 
-rhel_72()
+rhel_7x()
 {
-    echo "RHEL 7.2"
+    echo "RHEL 7.x"
 
     # rewrite SELINUX config to disable and turn off enforcement
     sed -i.bak "s/^SELINUX=.*$/SELINUX=disabled/" /etc/selinux/config
@@ -187,10 +203,9 @@ rhel_72()
     # Poke sysctl to have it pickup the config change.
     sysctl -p
 
-    # execute the CentOS 7.2 / RHEL 7.2 network manager setup
-    networkmanager_72
+    # execute the CentOS 7.x / RHEL 7.x network manager setup
+    networkmanager_7
 }
-
 
 
 #
@@ -211,59 +226,59 @@ release=""
 rpm -q redhat-lsb
 if [ $? -eq 0 ]; then
     os=$(lsb_release -si)
-    release=$(lsb_release -sr)
+    major_release=$(lsb_release -sr | cut -d '.' -f 1)
 
 # if lsb_release isn't installed, use /etc/redhat-release
 else
-    grep  "CentOS.* 6\.7" /etc/redhat-release
+    grep  "CentOS.* 6\." /etc/redhat-release
     if [ $? -eq 0 ]; then
         os="CentOS"
-        release="6.7"
+        major_release="6"
     fi
 
-    grep "CentOS.* 7\.2" /etc/redhat-release
+    grep "CentOS.* 7\." /etc/redhat-release
     if [ $? -eq 0 ]; then
         os="CentOS"
-        release="7.2"
+        major_release="7"
     fi
 
-    grep "Red Hat Enterprise Linux Server release 6.7" /etc/redhat-release
+    grep "Red Hat Enterprise Linux Server release 6\." /etc/redhat-release
     if [ $? -eq 0 ]; then
         os="RedHatEnterpriseServer"
-        release="6.7"
+        major_release="6"
     fi
 
-    grep "Red Hat Enterprise Linux Server release 7.2" /etc/redhat-release
+    grep "Red Hat Enterprise Linux Server release 7\." /etc/redhat-release
     if [ $? -eq 0 ]; then
         os="RedHatEnterpriseServer"
-        release="7.2"
+        major_release="7"
     fi
 fi
 
-echo "OS: $os $release"
+echo "OS: $os $major_release"
 
 # select the OS and run the appropriate setup script
 not_supported_msg="OS $os $release is not supported."
 if [ "$os" = "CentOS" ]; then
-    if [ "$release" = "6.7" ]; then
-        centos_67
-    elif [ "$release" = "7.2" ]; then
-        centos_72
+    if [ "$major_release" = "6" ]; then
+        centos_6x
+    elif [ "$major_release" = "7" ]; then
+        centos_7x
     else
-        echo not_supported_msg
+        echo "$not_supported_msg"
         exit 1
     fi
 
 elif [ "$os" = "RedHatEnterpriseServer" ]; then
-    if [ "$release" = "6.7" ]; then
-        rhel_67
-    elif [ "$release" = "7.2" ]; then
-        rhel_72
+    if [ "$major_release" = "6" ]; then
+        rhel_6x
+    elif [ "$major_release" = "7" ]; then
+        rhel_7x
     else
-        echo not_supported_msg
+        echo "$not_supported_msg"
         exit 1
     fi
 else
-    echo not_supported_msg
+    echo "$not_supported_msg"
     exit 1
 fi

@@ -16,4 +16,4 @@
 
 # We remove any natively installed JDKs, as both Cloudera Manager and Cloudera Director only support Oracle JDKs
 yum remove --assumeyes *openjdk*
-rpm -ivh "http://archive.cloudera.com/director/redhat/7/x86_64/director/2.2.0/RPMS/x86_64/jdk-8u60-linux-x64.rpm"
+rpm -ivh "http://archive.cloudera.com/director/redhat/7/x86_64/director/2.3.0/RPMS/x86_64/jdk-8u60-linux-x64.rpm"

@@ -36,13 +36,13 @@ instances {
     m3x {
         type: m3.xlarge
         image: ami-6283a827
-        bootstrapScriptPath: "/script-path/java8-bootstrap-script.sh"
+        bootstrapScriptsPaths: ["/script-path/java8-bootstrap-script.sh"]
     }
 }
 ```
 
-Alternatively, you can copy the contents of the bootstrap script itself and use the `bootstrapScript`
+Alternatively, you can copy the contents of the bootstrap script itself and use the `bootstrapScripts`
 property instead.
 
-**NOTE**: The URL in this script refers to CentOS/RHEL 7 and Director 2.3.0. You may need to update the URL
+**NOTE**: The URL in this script refers to CentOS/RHEL 7 and Director 2.4.0-SNAPSHOT. You may need to update the URL
 for CentOS/RHEL 6 depending on what OS your deployment/cluster instances are running.

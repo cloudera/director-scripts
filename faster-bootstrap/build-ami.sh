@@ -42,9 +42,9 @@ Usage: $0 [options] <aws-region> <os> [<name>] [<parcel-url>] [<repository-url>]
   [<name>]:      An optional descriptive name for the new AMI.
       Default is calculated dynamically (specified by "AUTO")
   [<parcel-url>]:      Optional parcel URL to use for preloading.
-      Default http://archive.cloudera.com/cdh5/parcels/5.10/
+      Default http://archive.cloudera.com/cdh5/parcels/5.11/
   [<repository-url>]:  Optional Cloudera Manager yum repo to use for preloading.
-      Default http://archive.cloudera.com/cm5/redhat/7/x86_64/cm/5.10/
+      Default http://archive.cloudera.com/cm5/redhat/7/x86_64/cm/5.11/
 
 Be sure to specify <repository-url> for operating systems other than RHEL 7 or
 CentOS 7.
@@ -115,10 +115,10 @@ get_director_yum_url() {
 
   case $os in
     centos6* | rhel6*)
-      echo "http://archive.cloudera.com/director/redhat/6/x86_64/director/2.2/"
+      echo "http://archive.cloudera.com/director/redhat/6/x86_64/director/2.4/"
       ;;
     centos7* | rhel7*)
-      echo "http://archive.cloudera.com/director/redhat/7/x86_64/director/2.2/"
+      echo "http://archive.cloudera.com/director/redhat/7/x86_64/director/2.4/"
       ;;
     *)
       echo ""
@@ -180,8 +180,8 @@ fi
 AWS_REGION=$1
 OS=$2
 NAME=${3-AUTO}
-CDH_URL=${4-"http://archive.cloudera.com/cdh5/parcels/5.10/"}
-CM_REPO_URL=${5-"http://archive.cloudera.com/cm5/redhat/7/x86_64/cm/5.10/"}
+CDH_URL=${4-"http://archive.cloudera.com/cdh5/parcels/5.11/"}
+CM_REPO_URL=${5-"http://archive.cloudera.com/cm5/redhat/7/x86_64/cm/5.11/"}
 
 # Validate OS TBD
 

@@ -23,7 +23,7 @@ git clone https://github.com/cloudera/director-scripts/
 #### All following steps are to be executed in the Director instance
 - Install Director and other packages:
 ```sh
-cd transient-aws
+cd director-scripts/transient-aws
 ./install_director.sh
 ```
 

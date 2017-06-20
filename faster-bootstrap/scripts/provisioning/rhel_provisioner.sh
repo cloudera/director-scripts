@@ -17,7 +17,7 @@
 CM_GPG_KEY=${CM_GPG_KEY:-https://archive.cloudera.com/cm5/redhat/6/x86_64/cm/RPM-GPG-KEY-cloudera}
 
 # Install ntp, curl, nscd, screen, and python
-sudo yum -y install ntp curl nscd screen python
+sudo yum -y install ntp curl nscd screen python bc
 
 # Configure the Cloudera Manager repository
 echo "Configuring Cloudera Manager repository at $CM_REPOSITORY_URL"
@@ -46,7 +46,12 @@ fi
 case $JAVA_VERSION in
   1\.8)
     # Package name for RPM available from Cloudera Director repo
-    JDK_PACKAGE="jdk1.8.0_60"
+    director_ver=$(basename ${JDK_REPOSITORY_URL})
+    if [[ $(echo "$director_ver >= 2.4" | bc) -eq 1 ]]; then
+      JDK_PACKAGE="oracle-j2sdk${JAVA_VERSION}"
+    else
+      JDK_PACKAGE="jdk1.8.0_60"
+    fi
     ;;
   *)
     # Package name for RPM available from Cloudera Manager or Cloudera Director repo
@@ -56,6 +61,9 @@ esac
 
 echo "Installing JDK and CM"
 sudo yum -y install "$JDK_PACKAGE" cloudera-manager-agent cloudera-manager-daemons cloudera-manager-server cloudera-manager-server-db-2
+JAVA_HOME=$(ls -d /usr/java/*)
+sudo alternatives --install /usr/bin/java java ${JAVA_HOME}/bin/java 1
+sudo alternatives --install /usr/bin/javac javac ${JAVA_HOME}/bin/javac 1
 
 # Define service_control
 . /tmp/service_control.sh

@@ -16,7 +16,7 @@ To learn how to use a preloaded AMI, consult the [usage document](ami-usage.md).
 
 ### Prerequisites
 
-Before running the script, [Packer](https://packer.io/) must be installed. Use version 0.8 or newer. Follow the [installation instructions](https://www.packer.io/intro/getting-started/setup.html). Be careful about the other "packer" tool often installed on Red Hat systems.
+Before running the script, [Packer](https://packer.io/) must be installed. Use version 0.8 or newer. Follow the [installation instructions](https://www.packer.io/intro/getting-started/install.html). Be careful about the other "packer" tool often installed on Red Hat systems.
 
 This script and other scripts it sources require bash 4 or higher. Mac OS X and macOS remain on bash 3, so be sure to install and use bash 4, using [Homebrew](http://brew.sh/) for example.
 

@@ -1,5 +1,9 @@
 # Cloudera Director Public Scripts
 
+## Contributing Code
+
+In order to contribute code you must sign one of two agreements. If you are choosing to contribute on your own behalf then sign the [ICLA](ICLA.txt). If you are contributing on behalf of an organization or a company you must sign the [CCLA](CCLA.txt). It is a requirement that you sign one of the license agreements for us to recognize and use the code you have contributed. You only need to sign an agreement once and then can get started. Submit your signed agreements to cla@cloudera.com. Thank you for your contributions!
+
 ## Overview
 
 Cloudera Director has two points during the cluster creation process where custom made user scripts can be run.

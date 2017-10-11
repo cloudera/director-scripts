@@ -18,14 +18,14 @@
 
 #
 # This script will bootstrap these OSes:
-#   - CentOS 6.7
-#   - CentOS 7.2
-#   - RHEL 6.7
-#   - RHEL 7.2
+#   - CentOS 6
+#   - CentOS 7
+#   - RHEL 6
+#   - RHEL 7
 #
-# Notes and notible differences between OSes:
-#   - CentOS 6.7 and RHEL 6.7 use dhclient
-#   - CentOS 7.2 and RHEL 7.2 use NetworkManager
+# Notes and notable differences between OSes:
+#   - CentOS and RHEL 6 use dhclient
+#   - CentOS and RHEL 7 use NetworkManager
 #
 
 
@@ -33,12 +33,14 @@
 # Functions
 #
 
-# writing dhclient-exit-hooks is the same for CentOS 6.x and RHEL 6.x
-# function not indented so EOF works
+#
+# CentOS and RHEL 6 use dhclient. Add a script to be automatically invoked when interface comes up.
+# Function not indented so EOF works.
+#
 dhclient_6()
 {
 # dhclient-exit-hooks explained in dhclient-script man page: http://linux.die.net/man/8/dhclient-script
-# cat a here-doc represenation of the hooks to the appropriate file
+# cat a here-doc representation of the hooks to the appropriate file
 cat > /etc/dhcp/dhclient-exit-hooks <<"EOF"
 #!/bin/bash
 printf "\ndhclient-exit-hooks running...\n\treason:%s\n\tinterface:%s\n" "${reason:?}" "${interface:?}"
@@ -48,13 +50,11 @@ then
     exit 0;
 fi
 # when we have a new IP, perform nsupdate
-if [ "$reason" = BOUND ] || [ "$reason" = RENEW ] ||
-[ "$reason" = REBIND ] || [ "$reason" = REBOOT ]
+if [ "$reason" = BOUND ] || [ "$reason" = RENEW ] || [ "$reason" = REBIND ] || [ "$reason" = REBOOT ]
 then
     printf "\tnew_ip_address:%s\n" "${new_ip_address:?}"
     host=$(hostname -s)
-    domain=$(hostname | cut -d'.' -f2- -s)
-    domain=${domain:='cdh-cluster.internal'} # REPLACE-ME If no hostname is provided, use cdh-cluster.internal
+    domain=$(nslookup $(grep -i nameserver /etc/resolv.conf | cut -d ' ' -f 2) | grep -i name | cut -d ' ' -f 3 | cut -d '.' -f 2- | rev | cut -c 2- | rev)
     IFS='.' read -ra ipparts <<< "$new_ip_address"
     ptrrec="$(printf %s "$new_ip_address." | tac -s.)in-addr.arpa"
     nsupdatecmds=$(mktemp -t nsupdate.XXXXXXXXXX)
@@ -82,18 +82,18 @@ service network restart
 }
 
 
-centos_6x()
+centos_6()
 {
-    echo "CentOS 6.x"
+    echo "CentOS 6"
 
-    # execute the CentOS 6.x / RHEL 6.x dhclient-exit-hooks setup
+    # execute the CentOS / RHEL 6 dhclient-exit-hooks setup
     dhclient_6
 }
 
 
-rhel_6x()
+rhel_6()
 {
-    echo "RHEL 6.x"
+    echo "RHEL 6"
 
     # rewrite SELINUX config to disabled and turn off enforcement
     sed -i.bak "s/^SELINUX=.*$/SELINUX=disabled/" /etc/selinux/config
@@ -108,16 +108,17 @@ rhel_6x()
     sysctl -w net.ipv6.conf.all.disable_ipv6=1
     sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-    # execute the CentOS 6.x / RHEL 6.x dhclient-exit-hooks setup
+    # execute the CentOS / RHEL 6 dhclient-exit-hooks setup
     dhclient_6
 }
 
 
-# writing network manager hooks is the same for CentOS 7.2 and RHEL 7.2
-# function not indented so EOF works
+#
+# CentOS and RHEL 7 use NetworkManager. Add a script to be automatically invoked when interface comes up.
+# Function not indented so EOF works.
+#
 networkmanager_7()
 {
-# Centos 7.2 and RHEL 7.2 uses NetworkManager. Add a script to be automatically invoked when interface comes up.
 cat > /etc/NetworkManager/dispatcher.d/12-register-dns <<"EOF"
 #!/bin/bash
 # NetworkManager Dispatch script
@@ -131,7 +132,7 @@ cat > /etc/NetworkManager/dispatcher.d/12-register-dns <<"EOF"
 
 # Register A and PTR records when interface comes up
 # only execute on the primary nic
-if [ "$1" != "eth0" || "$2" != "up" ]
+if [ "$1" != "eth0" ] || [ "$2" != "up" ]
 then
     exit 0;
 fi
@@ -140,8 +141,7 @@ fi
 new_ip_address="$DHCP4_IP_ADDRESS"
 
 host=$(hostname -s)
-domain=$(hostname | cut -d'.' -f2- -s)
-domain=${domain:='cdh-cluster.internal'} # REPLACE-ME If no hostname is provided, use cdh-cluster.internal
+domain=$(nslookup $(grep -i nameserver /etc/resolv.conf | cut -d ' ' -f 2) | grep -i name | cut -d ' ' -f 3 | cut -d '.' -f 2- | rev | cut -c 2- | rev)
 IFS='.' read -ra ipparts <<< "$new_ip_address"
 ptrrec="$(printf %s "$new_ip_address." | tac -s.)in-addr.arpa"
 nsupdatecmds=$(mktemp -t nsupdate.XXXXXXXXXX)
@@ -167,18 +167,18 @@ service network restart
 }
 
 
-centos_7x()
+centos_7()
 {
-    echo "CentOS 7.x"
+    echo "CentOS 7"
 
-    # execute the CentOS 7.x / RHEL 7.x network manager setup
+    # execute the CentOS / RHEL 7 network manager setup
     networkmanager_7
 }
 
 
-rhel_7x()
+rhel_7()
 {
-    echo "RHEL 7.x"
+    echo "RHEL 7"
 
     # rewrite SELINUX config to disable and turn off enforcement
     sed -i.bak "s/^SELINUX=.*$/SELINUX=disabled/" /etc/selinux/config
@@ -186,7 +186,7 @@ rhel_7x()
     # stop firewall and disable
     systemctl stop iptables
     systemctl iptables off
-    # RHEL 7.x uses firewalld
+    # RHEL 7 uses firewalld
     systemctl stop firewalld
     systemctl disable firewalld
     # Disable tuned so it does not overwrite sysctl.conf
@@ -199,11 +199,11 @@ rhel_7x()
     echo "# Disable IPv6" >> /etc/sysctl.conf
     echo "net.ipv6.conf.all.disable_ipv6 = 1" >> /etc/sysctl.conf
     echo "net.ipv6.conf.default.disable_ipv6 = 1" >> /etc/sysctl.conf
-    # swappniess is set by Director in /etc/sysctl.conf
+    # swappiness is set by Director in /etc/sysctl.conf
     # Poke sysctl to have it pickup the config change.
     sysctl -p
 
-    # execute the CentOS 7.x / RHEL 7.x network manager setup
+    # execute the CentOS / RHEL 7 network manager setup
     networkmanager_7
 }
 
@@ -213,43 +213,44 @@ rhel_7x()
 #
 
 # ensure user is root
-if [ "$(id -u)" -ne 0 ]; then
+if [ "$(id -u)" -ne 0 ]
+then
     echo "Please run as root."
     exit 1
 fi
 
 # find the OS and release
 os=""
-release=""
+major_release=""
 
 # if it's there, use lsb_release
-rpm -q redhat-lsb
-if [ $? -eq 0 ]; then
+if rpm -q redhat-lsb
+then
     os=$(lsb_release -si)
     major_release=$(lsb_release -sr | cut -d '.' -f 1)
 
 # if lsb_release isn't installed, use /etc/redhat-release
 else
-    grep  "CentOS.* 6\." /etc/redhat-release
-    if [ $? -eq 0 ]; then
+    if grep "CentOS.* 6\\." /etc/redhat-release
+    then
         os="CentOS"
         major_release="6"
     fi
 
-    grep "CentOS.* 7\." /etc/redhat-release
-    if [ $? -eq 0 ]; then
+    if grep "CentOS.* 7\\." /etc/redhat-release
+    then
         os="CentOS"
         major_release="7"
     fi
 
-    grep "Red Hat Enterprise Linux Server release 6\." /etc/redhat-release
-    if [ $? -eq 0 ]; then
+    if grep "Red Hat Enterprise Linux Server release 6\\." /etc/redhat-release
+    then
         os="RedHatEnterpriseServer"
         major_release="6"
     fi
 
-    grep "Red Hat Enterprise Linux Server release 7\." /etc/redhat-release
-    if [ $? -eq 0 ]; then
+    if grep "Red Hat Enterprise Linux Server release 7\\." /etc/redhat-release
+    then
         os="RedHatEnterpriseServer"
         major_release="7"
     fi
@@ -258,12 +259,12 @@ fi
 echo "OS: $os $major_release"
 
 # select the OS and run the appropriate setup script
-not_supported_msg="OS $os $release is not supported."
+not_supported_msg="OS $os $major_release is not supported."
 if [ "$os" = "CentOS" ]; then
     if [ "$major_release" = "6" ]; then
-        centos_6x
+        centos_6
     elif [ "$major_release" = "7" ]; then
-        centos_7x
+        centos_7
     else
         echo "$not_supported_msg"
         exit 1
@@ -271,9 +272,9 @@ if [ "$os" = "CentOS" ]; then
 
 elif [ "$os" = "RedHatEnterpriseServer" ]; then
     if [ "$major_release" = "6" ]; then
-        rhel_6x
+        rhel_6
     elif [ "$major_release" = "7" ]; then
-        rhel_7x
+        rhel_7
     else
         echo "$not_supported_msg"
         exit 1

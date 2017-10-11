@@ -61,7 +61,8 @@
     },
     {
         "type": "shell",
-        "inline": "sudo reboot"
+        "inline": "sudo reboot",
+        "expect_disconnect": true
     },
     {
         "type": "file",

@@ -20,6 +20,10 @@
 # Check that everything is working
 #
 echo "Running sanity checks:"
+echo "1. 'hostname -f'"
+echo "2. 'hostname -i'"
+echo "3. 'host \$(hostname -f)'"
+echo "4. 'host \$(hostname -i)'"
 
 if ! hostname -f
 then
@@ -35,13 +39,13 @@ fi
 
 if ! host "$(hostname -f)"
 then
-    echo "Unable to run the command 'host \`hostname -f\`' (check 3 of 4)"
+    echo "Unable to run the command 'host \$(hostname -f)' (check 3 of 4)"
     exit 1
 fi
 
 if ! host "$(hostname -i)"
 then
-    echo "Unable to run the command 'host \`hostname -i\`' (check 4 of 4)"
+    echo "Unable to run the command 'host \$(hostname -i)' (check 4 of 4)"
     exit 1
 fi
 

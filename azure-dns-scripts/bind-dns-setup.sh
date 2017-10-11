@@ -19,15 +19,16 @@
 #
 # This script will walk you through setting up BIND on the host and making the changes needed in
 # Azure portal.
-# This script will bootstrap these OSes:
-#   - CentOS 6.7
-#   - CentOS 7.2
-#   - RHEL 6.7
-#   - RHEL 7.2
 #
-# Notes and notible differences between OSes:
-#   - CentOS 6.7 and RHEL 6.7 use dhclient
-#   - CentOS 7.2 and RHEL 7.2 use NetworkManager
+# This script will bootstrap these OSes:
+#   - CentOS 6
+#   - CentOS 7
+#   - RHEL 6
+#   - RHEL 7
+#
+# Notes and notable differences between OSes:
+#   - CentOS and RHEL 6 use dhclient
+#   - CentOS and RHEL 7 use NetworkManager
 #
 
 #
@@ -324,13 +325,11 @@ base_end() {
 
 
 #
-# This function creates the dhclient hooks
-# writing dhclient-exit-hooks is the same for CentOS 6.7 and RHEL 6.7
-# function not indented so EOF works
+# CentOS and RHEL 6 use dhclient. Add a script to be automatically invoked when interface comes up.
+# Function not indented so EOF works.
 #
-dhclient_67()
+dhclient_6()
 {
-
 # dhclient-exit-hooks explained in dhclient-script man page: http://linux.die.net/man/8/dhclient-script
 # cat a here-doc represenation of the hooks to the appropriate file
 cat > /etc/dhcp/dhclient-exit-hooks <<"EOF"
@@ -342,8 +341,7 @@ then
     exit 0;
 fi
 # when we have a new IP, update the search domain
-if [ "$reason" = BOUND ] || [ "$reason" = RENEW ] ||
-   [ "$reason" = REBIND ] || [ "$reason" = REBOOT ]
+if [ "$reason" = BOUND ] || [ "$reason" = RENEW ] || [ "$reason" = REBIND ] || [ "$reason" = REBOOT ]
 then
 EOF
 # this is a separate here-doc because there's two sets of variable substitution going on, this set
@@ -363,26 +361,25 @@ fi
 exit 0;
 EOF
 chmod 755 /etc/dhcp/dhclient-exit-hooks
-
 }
 
 
-centos_67()
+centos_6()
 {
     echo "CentOS 6.7"
 
     base_beginning
 
     # execute the CentOS 6.7 / RHEL 6.7 dhclient-exit-hooks setup
-    dhclient_67
+    dhclient_6
 
     base_end
 }
 
 
-rhel_67()
+rhel_6()
 {
-    echo "RHEL 6.7"
+    echo "RHEL 6"
 
     # rewrite SELINUX config to disabled and turn off enforcement
     sed -i.bak "s/^SELINUX=.*$/SELINUX=disabled/" /etc/selinux/config
@@ -399,21 +396,19 @@ rhel_67()
 
     base_beginning
 
-    # execute the CentOS 6.7 / RHEL 6.7 dhclient-exit-hooks setup
-    dhclient_67
+    # execute the CentOS / RHEL 6 dhclient-exit-hooks setup
+    dhclient_6
 
     base_end
 }
 
 
 #
-# This function creates the networkmanager hooks
-# writing network manager hooks is the same for CentOS 7.2 and RHEL 7.2
-# function not indented so EOF works
+# CentOS and RHEL 7 use NetworkManager. Add a script to be automatically invoked when interface comes up.
+# Function not indented so EOF works.
 #
-networkmanager_72()
+networkmanager_7()
 {
-# Centos 7.2 and RHEL 7.2 uses NetworkManager. Add a script to be automatically invoked when interface comes up.
 cat > /etc/NetworkManager/dispatcher.d/12-register-dns <<"EOF"
 #!/bin/bash
 # NetworkManager Dispatch script
@@ -427,7 +422,7 @@ cat > /etc/NetworkManager/dispatcher.d/12-register-dns <<"EOF"
 
 # Register A and PTR records when interface comes up
 # only execute on the primary nic
-if [ "$1" != "eth0" || "$2" != "up" ]
+if [ "$1" != "eth0" ] || [ "$2" != "up" ]
 then
     exit 0;
 fi
@@ -457,22 +452,20 @@ chmod 755 /etc/NetworkManager/dispatcher.d/12-register-dns
 }
 
 
-centos_72()
+centos_7()
 {
-    echo "CentOS 7.2"
+    echo "CentOS 7"
 
     base_beginning
 
-    # execute the CentOS 7.2 / RHEL 7.2 network manager setup
-    networkmanager_72
-
-    base_end
+    # execute the CentOS / RHEL 7 network manager setup
+    networkmanager_7
 }
 
 
-rhel_72()
+rhel_7()
 {
-    echo "RHEL 7.2"
+    echo "RHEL 7"
 
     # rewrite SELINUX config to disable and turn off enforcement
     sed -i.bak "s/^SELINUX=.*$/SELINUX=disabled/" /etc/selinux/config
@@ -480,7 +473,7 @@ rhel_72()
     # stop firewall and disable
     systemctl stop iptables
     systemctl iptables off
-    # RHEL 7.x uses firewalld
+    # RHEL 7 uses firewalld
     systemctl stop firewalld
     systemctl disable firewalld
     # Disable tuned so it does not overwrite sysctl.conf
@@ -493,16 +486,14 @@ rhel_72()
     echo "# Disable IPv6" >> /etc/sysctl.conf
     echo "net.ipv6.conf.all.disable_ipv6 = 1" >> /etc/sysctl.conf
     echo "net.ipv6.conf.default.disable_ipv6 = 1" >> /etc/sysctl.conf
-    # swappniess is set by Director in /etc/sysctl.conf
+    # swappiness is set by Director in /etc/sysctl.conf
     # Poke sysctl to have it pickup the config change.
     sysctl -p
 
     base_beginning
 
-    # execute the CentOS 7.2 / RHEL 7.2 network manager setup
-    networkmanager_72
-
-    base_end
+    # execute the CentOS / RHEL 7 network manager setup
+    networkmanager_7
 }
 
 
@@ -519,74 +510,65 @@ fi
 
 # find the OS and release
 os=""
-release=""
+major_release=""
 
 # if it's there, use lsb_release
-
 if rpm -q redhat-lsb
 then
     os=$(lsb_release -si)
-    release=$(lsb_release -sr)
+    major_release=$(lsb_release -sr | cut -d '.' -f 1)
 
 # if lsb_release isn't installed, use /etc/redhat-release
 else
-
-    if grep "CentOS.* 6\.7" /etc/redhat-release
+    if grep  "CentOS.* 6\\." /etc/redhat-release
     then
         os="CentOS"
-        release="6.7"
+        major_release="6"
     fi
 
-
-    if grep "CentOS.* 7\.2" /etc/redhat-release
+    if grep "CentOS.* 7\\." /etc/redhat-release
     then
         os="CentOS"
-        release="7.2"
+        major_release="7"
     fi
 
-    if grep "Red Hat Enterprise Linux Server release 6.7" /etc/redhat-release
+    if grep "Red Hat Enterprise Linux Server release 6\\." /etc/redhat-release
     then
         os="RedHatEnterpriseServer"
-        release="6.7"
+        major_release="6"
     fi
 
-    if grep "Red Hat Enterprise Linux Server release 7.2" /etc/redhat-release
+    if grep "Red Hat Enterprise Linux Server release 7\\." /etc/redhat-release
     then
         os="RedHatEnterpriseServer"
-        release="7.2"
+        major_release="7"
     fi
 fi
 
-echo "OS: $os $release"
+echo "OS: $os $major_release"
 
 # select the OS and run the appropriate setup script
-not_supported_msg="OS $os $release is not supported."
-if [ "$os" = "CentOS" ]
-then
-    if [ "$release" = "6.7" ]
-    then
-        centos_67
-    elif [ "$release" = "7.2" ]
-    then
-        centos_72
+not_supported_msg="OS $os $major_release is not supported."
+if [ "$os" = "CentOS" ]; then
+    if [ "$major_release" = "6" ]; then
+        centos_6
+    elif [ "$major_release" = "7" ]; then
+        centos_7
     else
-        echo not_supported_msg
+        echo "$not_supported_msg"
         exit 1
     fi
 
-elif [ "$os" = "RedHatEnterpriseServer" ]
-then
-    if [ "$release" = "6.7" ]
-    then
-        rhel_67
-    elif [ "$release" = "7.2" ]
-    then
-        rhel_72
+elif [ "$os" = "RedHatEnterpriseServer" ]; then
+    if [ "$major_release" = "6" ]; then
+        rhel_6
+    elif [ "$major_release" = "7" ]; then
+        rhel_7
     else
-        echo not_supported_msg
+        echo "$not_supported_msg"
         exit 1
     fi
 else
-    echo not_supported_msg
+    echo "$not_supported_msg"
     exit 1
 fi

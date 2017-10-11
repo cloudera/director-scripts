@@ -8,13 +8,13 @@ This directory contains some sample scripts for various DNS operations.
 
 These scripts assume there is a DNS server already setup with proper zone files and that the VM hosts have permission to update DNS records.
 
-* `bootstrap_dns_dhclient.sh`: This is the sample instance bootstrap script to setup automatic DNS record update using `dhclient` for RHEL/CentOS 6 VMs provisioned by Director. To use this script, copy it into the "bootstrap script" section of the Cloudera Director instance template.
-* `bootstrap_dns_nm.sh`: This is the sample instance bootstrap script to setup automatic DNS record update using `Network Manager` for RHEL/CentOS 7 VMs provisioned by Director. To use this script, copy it into the "bootstrap script" section of the Cloudera Director instance template.
+* `bootstrap_dns_dhclient.sh`: This is the sample instance bootstrap script to setup automatic DNS record update using `dhclient` for CentOS and RHEL 6 VMs provisioned by Director. To use this script, copy it into the "bootstrap script" section of the Cloudera Director instance template.
+* `bootstrap_dns_nm.sh`: This is the sample instance bootstrap script to setup automatic DNS record update using `Network Manager` for CentOS and RHEL 7 VMs provisioned by Director. To use this script, copy it into the "bootstrap script" section of the Cloudera Director instance template.
 * `dhclient-exit-hooks`: This is the DHCP client exit hook script that will automatically update DNS record (via `nsupdate`) when the VM network service is restarted. This script assumes the host VM is running `dhclient`.
 
 ## BIND setup scripts
 
-_Note: These scripts will bootstrap CentOS 6.7, CentOS 7.2, RHEL 6.7, and RHEL 7.2_
+_Note: These scripts will bootstrap CentOS and RHEL 6, and CentOS and RHEL 7_
 
 * `bind-dns-setup.sh`: This is the BIND setup script that will turn a newly created VM into a BIND server and walk you through changing Azure DNS settings. This script assumes it's running on a newly provisioned VM, or that `bind-dns-reset.sh` has been executed.
 * `bind-dns-reset.sh`: This is the reset script that will walk you through resetting a host's DNS settings back to default so that you can run `bind-dns-setup.sh` agian.

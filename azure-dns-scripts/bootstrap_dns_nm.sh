@@ -16,7 +16,9 @@
 # limitations under the License.
 #
 
-# RHEL 7.2 uses NetworkManager. Add a script to be automatically invoked when interface comes up.
+#
+# CentOS and RHEL 7 use NetworkManager. Add a script to be automatically invoked when interface comes up.
+#
 cat > /etc/NetworkManager/dispatcher.d/12-register-dns <<"EOF"
 #!/bin/bash
 # NetworkManager Dispatch script
@@ -30,7 +32,7 @@ cat > /etc/NetworkManager/dispatcher.d/12-register-dns <<"EOF"
 
 # Register A and PTR records when interface comes up
 # only execute on the primary nic
-if [ "$1" != "eth0" || "$2" != "up" ]
+if [ "$1" != "eth0" ] || [ "$2" != "up" ]
 then
     exit 0;
 fi
@@ -39,8 +41,7 @@ fi
 new_ip_address="$DHCP4_IP_ADDRESS"
 
 host=$(hostname -s)
-domain=$(hostname | cut -d'.' -f2- -s)
-domain=${domain:='cdh-cluster.internal'} # REPLACE-ME If no hostname is provided, use cdh-cluster.internal
+domain=$(nslookup $(grep -i nameserver /etc/resolv.conf | cut -d ' ' -f 2) | grep -i name | cut -d ' ' -f 3 | cut -d '.' -f 2- | rev | cut -c 2- | rev)
 IFS='.' read -ra ipparts <<< "$new_ip_address"
 ptrrec="$(printf %s "$new_ip_address." | tac -s.)in-addr.arpa"
 nsupdatecmds=$(mktemp -t nsupdate.XXXXXXXXXX)

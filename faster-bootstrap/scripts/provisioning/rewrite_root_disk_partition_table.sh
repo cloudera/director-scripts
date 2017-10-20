@@ -55,12 +55,24 @@ if ! (fdisk -l "${ROOT_DEVICE}" 2>/dev/null | grep -q -i 'GPT'); then
 
     # MBR partitions can be resized using fdisk or parted by rewriting the partition table
 
+    # fdisk automatically selects the first partition if there is only one, so form
+    # commands for fdisk depending on that
+    NUM_PARTITIONS=$(fdisk -l "${ROOT_DEVICE}" | grep -c "${ROOT_DEVICE}[0-9]")
+
     ROOT_PARTITION="${ROOT_DEVICE}1"
     PARTITION_INFO=$(echo p | fdisk -l "${ROOT_DEVICE}" | grep "${ROOT_PARTITION}")
-    TOGGLE_BOOTABLE_IF_NEEDED=$(echo "$PARTITION_INFO" | grep -q '*' && echo "echo a; echo 1")
+    if [ "$NUM_PARTITIONS" -gt 1 ]; then
+       TOGGLE_BOOTABLE_IF_NEEDED=$(echo "$PARTITION_INFO" | grep -q '*' && echo "echo a; echo 1")
+    else
+       TOGGLE_BOOTABLE_IF_NEEDED=$(echo "$PARTITION_INFO" | grep -q '*' && echo "echo a")
+    fi
     START_BLOCK=$(echo $PARTITION_INFO | awk '{if (NF == 7){print $3} else {print $2}}')
     START_SECTOR=$( (echo x; echo p) | fdisk "${ROOT_DEVICE}" 2>/dev/null | grep -e "^ 1" | awk '{print $9}')
-    CHANGE_START_SECTOR="echo x; echo b; echo 1; echo $START_SECTOR"
+    if [ "$NUM_PARTITIONS" -gt 1 ]; then
+       CHANGE_START_SECTOR="echo x; echo b; echo 1; echo $START_SECTOR"
+    else
+       CHANGE_START_SECTOR="echo x; echo b; echo $START_SECTOR"
+    fi
     (echo d; echo n; echo p; echo 1; echo "${START_BLOCK}"; echo; sh -c "${TOGGLE_BOOTABLE_IF_NEEDED}"; sh -c "$CHANGE_START_SECTOR"; echo w;) | fdisk "${ROOT_DEVICE}" 2>/dev/null
 
     # To complete the process resize2fs needs to be called after reboot (if there is no cloud-init)

@@ -366,11 +366,11 @@ chmod 755 /etc/dhcp/dhclient-exit-hooks
 
 centos_6()
 {
-    echo "CentOS 6.7"
+    echo "CentOS 6"
 
     base_beginning
 
-    # execute the CentOS 6.7 / RHEL 6.7 dhclient-exit-hooks setup
+    # execute the CentOS / RHEL 6 dhclient-exit-hooks setup
     dhclient_6
 
     base_end
@@ -460,6 +460,8 @@ centos_7()
 
     # execute the CentOS / RHEL 7 network manager setup
     networkmanager_7
+
+    base_end
 }
 
 
@@ -494,6 +496,8 @@ rhel_7()
 
     # execute the CentOS / RHEL 7 network manager setup
     networkmanager_7
+
+    base_end
 }
 
 

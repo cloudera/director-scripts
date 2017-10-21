@@ -64,3 +64,19 @@ exit 0;
 EOF
 chmod 755 /etc/NetworkManager/dispatcher.d/12-register-dns
 service network restart
+
+# Confirm DNS record has been updated, retry if update did not work
+i=0
+until [ $i -ge 5 ]
+do
+    sleep 5
+    i=$((i+1))
+    hostname | nslookup && break
+    service network restart
+done
+
+if [ $i -ge 5 ]; then
+    echo "DNS update failed"
+    exit 1
+fi
+exit 0

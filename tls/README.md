@@ -2,6 +2,69 @@
 
 Scripts in this directory help with working with TLS under Cloudera Director.
 
+## Configuring TLS Level 0 for Cloudera Manager
+
+The [manual TLS](https://www.cloudera.com/documentation/director/latest/topics/director_tls_enable.html#concept_rts_nbv_gbb) path for configuring Cloudera Manager for TLS leaves it up to you to create and install keys and certificates for the Cloudera Manager installation and for Cloudera Manager agents. The manual process begins with ["Level 0" for Cloudera Manager](https://www.cloudera.com/documentation/enterprise/latest/topics/cm_sg_tls_browser.html#xd_583c10bfdbd326ba-7dae4aa6-147c30d0933--7a61), which establishes a server certificate and enables TLS for the Cloudera Manager server, including its administrative web console.
+
+The script [configure_cm_tls_level_0.sh](configure_cm_tls_level_0.sh) performs Level 0 work automatically, with some variations to get started more quickly. At any time after Cloudera Director has completed bootstrapping the Cloudera Manager instance and installing Cloudera Manager, copy the script to the instance and run it under an account with passwordless sudo access.
+
+Pass the `-h` option to the script to see help information. Typical use should provide the base DN for the server certificate's subject DN and, for following along, the verbose flag.
+
+```
+$ ./configure_cm_tls_level_0.sh -v -b "OU=My Unit,O=My Organization,L=My City,ST=CA,C=US"
+Configuring TLS level 0 ...
+✔ Created keystore /opt/cloudera/security/pki/ip-203-0-113-101.ec2.internal-server.jks
+Go to http://203.0.113.101:7180/cmf/settings#filterdisplayGroup=Security:
+  check "Use TLS Encryption for Admin Console"
+  set "Cloudera Manager TLS/SSL Server JKS Keystore File Location" to:
+    /opt/cloudera/security/pki/ip-203-0-113-101.ec2.internal-server.jks
+  set "Cloudera Manager TLS/SSL Server JKS Keystore File Password" to:
+    cloudera
+and then Save Changes
+
+Certificate stored in file </opt/cloudera/security/pki/ip-203-0-113-101.ec2.internal-server.crt>
+✔ Exported server certificate to /opt/cloudera/security/pki/ip-203-0-113-101.ec2.internal-server.crt
+Certificate was added to keystore
+✔ Imported server certificate to /usr/java/jdk1.7.0_67-cloudera/jre/lib/security/jssecacerts
+Go to http://203.0.113.101:7180/cmf/services/1/config#filtercategory=MGMT+(Service-Wide)&filterdisplayGroup=Security:
+  set "TLS/SSL Client Truststore File Location" to:
+    /usr/java/jdk1.7.0_67-cloudera/jre/lib/security/jssecacerts
+  set "Cloudera Manager Server TLS/SSL Certificate Trust Store Password" to:
+    changeit
+and then Save Changes
+
+After changing CM configs:
+  run: sudo service cloudera-scm-server restart
+  go to https://203.0.113.101:7183/cmf/services/1/status and
+    accept the self-signed server certificate
+    restart the management services
+
+Certificate contents for updating Cloudera Director:
+
+-----BEGIN CERTIFICATE-----
+...
+-----END CERTIFICATE-----
+```
+
+### Variations from Level 0
+
+The script does some things differently from the Cloudera Manager documentation.
+
+* The original, self-signed server certificate is installed, instead of using one that is signed by a known certificate authority. After the script runs, a properly signed certificate may be swapped in.
+* The private IP address of the Cloudera Manager instance is included as a subject alternative name (SAN) on the server certificate, for compatibility with Cloudera Director.
+
+### Java Home
+
+The script uses a default location for Java that is usually established when Cloudera Director installs Cloudera Manager 5.x. To use a different Java installation, set the `JAVA_HOME` environment variable before running.
+
+The location of Java is necessary in order to use `keytool` and to find a truststore to copy and add the new server certificate to. It is recommended that the Java installation used be the same one used to run Cloudera Manager.
+
+### Output
+
+When run in verbose mode, the script provides instructions on how to configure Cloudera Manager the rest of the way for Level 0. The instructions are customized based on the environment, such as the private IP address for the Cloudera Manager instance and the chosen Java installation. Perform the steps in the instructions after the script completes.
+
+The contents of the (public) server certificate are also reported. Use this data as the "trusted certificate" when manually updating Cloudera Director to enable TLS communication with Cloudera Manager.
+
 ## Manually Enabling or Disabling TLS Communications with Cloudera Manager
 
 When using the [manual TLS](https://www.cloudera.com/documentation/director/latest/topics/director_tls_enable.html#concept_rts_nbv_gbb) path for configuring Cloudera Manager for TLS, it is necessary to update the corresponding deployment information in Cloudera Director to enable TLS communication. The [documented process](https://www.cloudera.com/documentation/director/latest/topics/director_tls_enable.html#concept_z4v_ybv_gbb) involves retrieving deployment template data from Cloudera Director's API as JSON, editing the JSON, and submitting the modified template back to Cloudera Director.

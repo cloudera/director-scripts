@@ -56,9 +56,9 @@ Director looks for a CDH parcel with a version satisfying the one listed for it 
 
 Director looks for a CDH parcel in the CDH parcel repository specified in the cluster template, or falls back to a default repository. A CDH parcel repository URL includes a partial or complete CDH version number in its path, and the repository at the URL contains the latest version of CDH that matches that version number. For example:
 
-* http://archive.cloudera.com/cdh5/parcels/5.7.0/ contains parcels for CDH version 5.7.0.
-* http://archive.cloudera.com/cdh5/parcels/5.7/ contains parcels for the latest version of CDH 5.7, such as version 5.7.4.
-* http://archive.cloudera.com/cdh5/parcels/5/ contains parcels for the latest version of CDH 5, such as version 5.9.0.
+* https://archive.cloudera.com/cdh5/parcels/5.7.0/ contains parcels for CDH version 5.7.0.
+* https://archive.cloudera.com/cdh5/parcels/5.7/ contains parcels for the latest version of CDH 5.7, such as version 5.7.4.
+* https://archive.cloudera.com/cdh5/parcels/5/ contains parcels for the latest version of CDH 5, such as version 5.9.0.
 
 The choice of parcel repository influences the CDH versions that Director can satisfactorily match. A repository for CDH 5.7.0 can be used for matching versions 5.7.0, 5.7, and 5. A repository for CDH 5 can always match version 5; today it may also match CDH 5.9, but in the future may match 5.10 instead, when that new version is released.
 

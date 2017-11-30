@@ -5,7 +5,7 @@ sudo yum install -y wget unzip
 wget --no-check-certificate --no-cookies --header 'Cookie: oraclelicense=accept-securebackup-cookie' http://download.oracle.com/otn-pub/java/jdk/8u102-b14/jdk-8u102-linux-x64.rpm
 sudo yum -y localinstall jdk-8u102-linux-x64.rpm
 cd /etc/yum.repos.d/
-sudo wget "http://archive.cloudera.com/director/redhat/7/x86_64/director/cloudera-director.repo"
+sudo wget "https://archive.cloudera.com/director/redhat/7/x86_64/director/cloudera-director.repo"
 sudo yum install -y cloudera-director-server cloudera-director-client
 sudo service cloudera-director-server start
 cd ~

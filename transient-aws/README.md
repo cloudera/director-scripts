@@ -41,7 +41,7 @@ cd director-scripts/transient-aws
 ```
 Here is an example build command that works in us-west-1
 ```sh
-./build-ami.sh -p -P -a "ami-af4333cf hvm centos /dev/sda1" us-west-1 centos72 cdh58-ami http://archive.cloudera.com/cdh5/parcels/5.8/ http://archive.cloudera.com/cm5/redhat/7/x86_64/cm/5.8/
+./build-ami.sh -p -P -a "ami-af4333cf hvm centos /dev/sda1" us-west-1 centos72 cdh58-ami https://archive.cloudera.com/cdh5/parcels/5.8/ https://archive.cloudera.com/cm5/redhat/7/x86_64/cm/5.8/
 ```
 You can complete the next few sections (everything except the last step) in a new shell window while packer builds the AMI.
 

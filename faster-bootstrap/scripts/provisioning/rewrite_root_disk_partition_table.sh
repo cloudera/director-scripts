@@ -34,7 +34,7 @@ df -h
 # OpenStack is "/dev/vda"
 
 ROOT_PARTITION_DEVICE=$(findmnt -n --evaluate -o SOURCE --target /)
-ROOT_DEVICE=$(echo $ROOT_PARTITION_DEVICE | sed -e "s/[0-9]*$//")
+ROOT_DEVICE=$(echo $ROOT_PARTITION_DEVICE | sed -e "s/\(p\|\)[0-9]*$//")
 
 # If the root partition is already using 95% or more of the root device skip the resize operation
 

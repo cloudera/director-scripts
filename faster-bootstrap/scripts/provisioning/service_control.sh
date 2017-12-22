@@ -35,6 +35,9 @@ service_control() {
       start)
         sudo systemctl start "${service}.service"
         ;;
+      stop)
+        sudo systemctl stop "${service}.service"
+        ;;
       *)
         echo "Invalid operation $operation"
         exit 1
@@ -49,7 +52,10 @@ service_control() {
         sudo chkconfig "$service" off
         ;;
       start)
-        sudo chkconfig "$service" start
+        sudo service "$service" start
+        ;;
+      stop)
+        sudo service "$service" stop
         ;;
       *)
         echo "Invalid operation $operation"

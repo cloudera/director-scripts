@@ -19,14 +19,14 @@
 # considered good choices, we cannot guarantee that they will always work.
 
 declare -A BASE_AMIS=(
-  ["centos64"]="ami-b3bf2f83 pv ec2-user /dev/sda1"
-  ["centos65"]="ami-b6bdde86 pv ec2-user /dev/sda"
+#  ["centos64"]="ami-b3bf2f83 pv ec2-user /dev/sda1"
+#  ["centos65"]="ami-b6bdde86 pv ec2-user /dev/sda"
   ["centos67"]="ami-05cf2265 hvm centos /dev/sda1"
   ["centos72"]="ami-d2c924b2 hvm centos /dev/sda1"
   ["centos73"]="ami-f4533694 hvm centos /dev/sda1"
   ["centos74"]="ami-b63ae0ce hvm centos /dev/sda1"
-  ["rhel64"]="ami-b8a63b88 pv ec2-user /dev/sda1"
-  ["rhel65"]="ami-7df0bd4d pv ec2-user /dev/sda1"
+#  ["rhel64"]="ami-b8a63b88 pv ec2-user /dev/sda1"
+#  ["rhel65"]="ami-7df0bd4d pv ec2-user /dev/sda1"
   ["rhel66"]="ami-2faa861f hvm ec2-user /dev/sda1"
   ["rhel67"]="ami-75f3f145 hvm ec2-user /dev/sda1"
   ["rhel71"]="ami-c15a52f1 hvm ec2-user /dev/sda1"

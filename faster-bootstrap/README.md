@@ -170,6 +170,14 @@ If parcels are pre-extracted by using the `-p` option, then the DISTRIBUTION pha
 
 When a block on an Amazon EBS volume is accessed for the first time, significant latency occurs due to the way EBS volumes are implemented. This has an impact on parcel extraction, even with parcel preloading. Director will [prewarm](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-prewarm.html) the parcel in order to speed up file system access to the parcel file. However, the extraction will still take some time as a result.
 
+#### Instance Type of the Build Instance
+
+The instance type used for the build instance is hardcoded in [rhel.json](packer-json/rhel.json) as the value of "instance_type". If you are building inside an EC2 region which lacks that instance type, edit the file to use one that is available. Ensure that the AMI used for the build is available for the updated instance type.
+
+Also, be sure that the AMI used for the build uses a virtualization type (paravirtual or HVM) supported by the instance type in rhel.json. If it does not, you should either use a different AMI, perhaps an equivalent one with a different virtualization type, or change the instance type in rhel.json.
+
+You may use a different instance type for running instances of the resulting preloaded AMI than the one used to build it.
+
 ## Faster Bootstrap for Cloudera Manager (experimental)
 
 Versions of Cloudera Manager starting with 5.9.0 include an *experimental* "Faster Bootstrap" capability. Enabling it can help Cloudera Manager to bootstrap clusters a few minutes faster.

@@ -115,10 +115,10 @@ get_director_yum_url() {
 
   case $os in
     centos6* | rhel6*)
-      echo "https://archive.cloudera.com/director/redhat/6/x86_64/director/2.4/"
+      echo "https://archive.cloudera.com/director/redhat/6/x86_64/director/2.7/"
       ;;
     centos7* | rhel7*)
-      echo "https://archive.cloudera.com/director/redhat/7/x86_64/director/2.4/"
+      echo "https://archive.cloudera.com/director/redhat/7/x86_64/director/2.7/"
       ;;
     *)
       echo ""
@@ -180,8 +180,8 @@ fi
 AWS_REGION=$1
 OS=$2
 NAME=${3-AUTO}
-CDH_URL=${4-"https://archive.cloudera.com/cdh5/parcels/5.13/"}
-CM_REPO_URL=${5-"https://archive.cloudera.com/cm5/redhat/7/x86_64/cm/5.13/"}
+CDH_URL=${4-"https://archive.cloudera.com/cdh5/parcels/5.14/"}
+CM_REPO_URL=${5-"https://archive.cloudera.com/cm5/redhat/7/x86_64/cm/5.14/"}
 
 # Validate OS TBD
 

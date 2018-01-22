@@ -35,6 +35,7 @@ df -h
 
 ROOT_PARTITION_DEVICE=$(findmnt -n --evaluate -o SOURCE --target /)
 ROOT_DEVICE=$(echo $ROOT_PARTITION_DEVICE | sed -e "s/\(p\|\)[0-9]*$//")
+ROOT_DEVICE_TYPE=$(findmnt -n --evaluate -o FSTYPE --target /)
 
 # If the root partition is already using 95% or more of the root device skip the resize operation
 
@@ -71,12 +72,6 @@ ${START_SECTOR},,,${BOOTABLE}
 0,0
 EOF
 
-    # To complete the process resize2fs needs to be called after reboot (if there is no cloud-init)
-
-    if ! hash cloud-init; then
-        echo "resize2fs \"${ROOT_PARTITION}\"" >> /etc/rc.local
-    fi
-
 else
 
     # GPT partitions require gdisk for resizing.
@@ -99,5 +94,17 @@ else
            -t ${PARTITION_NUMBER}:${FILESYSTEM} ${ROOT_DEVICE}
 
 fi
+
+# cloud-init does not guarantee the resizing of an instance, so we will attempt to grow the
+# instance after a reboot.
+
+if [ "$ROOT_DEVICE_TYPE" = "xfs" ]; then
+    echo "xfs_growfs /" >> /etc/rc.local
+else
+    echo "resize2fs \"${ROOT_PARTITION_DEVICE}\"" >> /etc/rc.local
+fi
+
+# /etc/rc.local is not necessarily marked executable on RHEL/CentOS 7, so we ensure that it is
+chmod +x /etc/rc.local
 
 exit 0

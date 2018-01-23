@@ -42,9 +42,9 @@ Usage: $0 [options] <aws-region> <os> [<name>] [<parcel-url>] [<repository-url>]
   [<name>]:      An optional descriptive name for the new AMI.
       Default is calculated dynamically (specified by "AUTO")
   [<parcel-url>]:      Optional parcel URL to use for preloading.
-      Default https://archive.cloudera.com/cdh5/parcels/5.13/
+      Default https://archive.cloudera.com/cdh5/parcels/5.14/
   [<repository-url>]:  Optional Cloudera Manager yum repo to use for preloading.
-      Default https://archive.cloudera.com/cm5/redhat/7/x86_64/cm/5.13/
+      Default https://archive.cloudera.com/cm5/redhat/7/x86_64/cm/5.14/
 
 Be sure to specify <repository-url> for operating systems other than RHEL 7 or
 CentOS 7.
@@ -191,7 +191,7 @@ if [[ -z $AMI_OPT ]]; then
   if [[ ${AMI_INFO[0]} == "unsupported_region" ]]; then
     echo "Base AMIs for region $AWS_REGION are not recorded, use -a to specify an AMI"
     exit 3
-  elif [[ -z "${AMI_INFO[@]}" ]]; then
+  elif [[ -z "${AMI_INFO[*]}" ]]; then
     echo "A base AMI is not recorded for OS $OS in $AWS_REGION, use -a to specify an AMI"
     exit 3
   fi

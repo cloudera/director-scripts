@@ -18,13 +18,10 @@
 # the environment and instance templates
 
 import argparse
-import ConfigParser
 import sys
-import time
-import uuid
 import urllib2
 
-from os.path import dirname, isfile, join, realpath
+from os.path import isfile
 from pyhocon import ConfigFactory
 from urllib2 import HTTPError
 
@@ -317,7 +314,7 @@ def add_existing_external_db_servers(client, config, environment_name):
     provider_config = config.get_config('provider')
     merged_provider_config = merge_configs([ssh_config, provider_config])
 
-    db_configs_by_db_name = config.get_config('databaseServers')
+    db_configs_by_db_name = config.get_config('databaseServers', default = {})
     for db_name in db_configs_by_db_name.viewkeys():
         db_config = db_configs_by_db_name.get_config(db_name)
         if is_existing_db_server(db_config):
@@ -496,28 +493,6 @@ def set_configuration_property_value(values_by_config_key, config_key, config_va
     return
 
 
-def load_config(config_file, fallback_config_files):
-    """
-    Load configuration from a HOCON configuration file, with an optional fallback chain
-
-    @param config_file:           the primary configuration file
-    @param fallback_config_files: an optional list of fallback configuration files
-
-    @rtype:                       ConfigTree
-    @return:                      configuration
-    """
-
-    config = ConfigFactory.parse_file(config_file)
-
-    if fallback_config_files:
-        for fallback_config_file in fallback_config_files:
-            if isfile(fallback_config_file):
-                config = config.with_fallback(fallback_config_file)
-            else:
-                print 'Warn: "%s" not found or not a file' % fallback_config_file
-
-    return config
-
 def main():
 
     parser = argparse.ArgumentParser(prog='setup-default.py')
@@ -547,11 +522,7 @@ def main():
         print 'Error: "%s" not found or not a file' % args.config_file
         return -1
 
-    script_path = dirname(realpath(__file__))
-    config = load_config(args.config_file, [
-                             join(script_path, 'aws.conf'),
-                             join(script_path, 'reference.conf')
-                         ])
+    config = ConfigFactory.parse_file(args.config_file)
 
     client = get_authenticated_client(args)
 

@@ -2,7 +2,7 @@
 
 ## Contributing Code
 
-In order to contribute code you must sign one of two agreements. If you are choosing to contribute on your own behalf then sign the [ICLA](ICLA.txt). If you are contributing on behalf of an organization or a company you must sign the [CCLA](CCLA.txt). It is a requirement that you sign one of the license agreements for us to recognize and use the code you have contributed. You only need to sign an agreement once and then can get started. Submit your signed agreements to cla@cloudera.com. Thank you for your contributions!
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Overview
 
@@ -11,9 +11,8 @@ Bootstrap scripts are run on an instance on startup, and post-creation scripts a
 cluster has been successfully created. This repository is a collection of freely available example scripts that
 Cloudera Director users can use to augment their clusters with advanced functionality.
 
-Please refer to the [Cloudera Director documentation]
-(http://www.cloudera.com/content/cloudera/en/documentation/cloudera-director/latest/topics/director_intro.html) for
-more details on where and how to add scripts.
+Please refer to the [Cloudera Director documentation](http://www.cloudera.com/content/cloudera/en/documentation/cloudera-director/latest/topics/director_intro.html)
+for more details on where and how to add scripts.
 
 ## Bootstrap scripts
 

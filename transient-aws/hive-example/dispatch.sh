@@ -32,7 +32,7 @@ fi
 RANDOM_TOKEN=$(uuidgen | tr -d '-' | fold -w 12 | head -n 1)
 
 #
-# Cloudera Director server credentials and URL
+# Cloudera Altus Director server credentials and URL
 #
 
 DIRECTOR_SERVER="http://localhost:7189"
@@ -231,19 +231,19 @@ if [[ -f "${PROVISION_CONFIG}" ]]; then
             exit -1
         fi
         echo "Stage is ${STAGE}. Sleeping for 10 seconds"
-        ### UNCOMMENT THIS IF YOU'D TO ESTIMATE PERCENT PROGRESS WHILE TESTING. 
+        ### UNCOMMENT THIS IF YOU'D TO ESTIMATE PERCENT PROGRESS WHILE TESTING.
         ### UPDATE SLEEP TIME ACCORDINGLY TO APPROXIMATE ACCURATE PROGRESS BAR
         #echo "Stage is ${STAGE}. Progress: ${progress}%..."
         #if [ "$progress" -lt "100" ]; then
         #   let "progress+=1"
-        #fi        
+        #fi
         sleep 10
     done
 
     echo "Cluster ${CLUSTER_NAME} is provisioned successfully"
     echo "Cluster ${CLUSTER_NAME} is ready to accept jobs"
     echo
-else 
+else
     echo "Config file not found"
     exit -1
 fi
@@ -303,7 +303,7 @@ if [[ "${SUBMIT_JOB}" == "true" ]]; then
     #
     echo "Starting job: ${JOB_ID}"
     #${SSH} -t sudo sh -e "${JOB_DIR}/${JOB_SCRIPT}"
-    ${SSH} -t "cd ${JOB_DIR}; chmod +x ${JOB_SCRIPT}; ./${JOB_SCRIPT}"    
+    ${SSH} -t "cd ${JOB_DIR}; chmod +x ${JOB_SCRIPT}; ./${JOB_SCRIPT}"
     mkdir -p logs/${JOB_ID}
     ${SCP} ${REMOTE}:/tmp/${SSH_USERNAME}/hive.log ./logs/${JOB_ID}/hive.log
     # REPLACE_ME with S3 log location

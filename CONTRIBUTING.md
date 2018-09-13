@@ -1,6 +1,6 @@
-Thanks for your interest in contributing to Cloudera Director scripts!
+Thanks for your interest in contributing to Cloudera Altus Director scripts!
 
-The Cloudera Director scripts project is an Apache-licensed, open source project associated with [Cloudera Director](https://www.cloudera.com/products/product-components/cloudera-director.html). This document contains guidelines for how to contribute to the project.
+The Cloudera Altus Director scripts project is an Apache-licensed, open source project associated with [Cloudera Altus Director](https://www.cloudera.com/products/product-components/cloudera-director.html). This document contains guidelines for how to contribute to the project.
 
 # How do I contribute code?
 
@@ -20,7 +20,7 @@ Now start coding! For best results, first fork this repository, and then create 
 
 As you are working, keep the following things in mind:
 
-First, please include tests with your changes where appropriate. If code changes do not include tests, it is much less likely that they will be accepted. If you are unsure how to write tests, please ask on the issue comment stream for guidance. You should also try using your updates on a recent release of Cloudera Director, to be sure that they integrate successfully and work as intended in a live scenario.
+First, please include tests with your changes where appropriate. If code changes do not include tests, it is much less likely that they will be accepted. If you are unsure how to write tests, please ask on the issue comment stream for guidance. You should also try using your updates on a recent release of Cloudera Altus Director, to be sure that they integrate successfully and work as intended in a live scenario.
 
 Second, please keep your changes narrowly targeted to the problem described by the issue. It’s better for everyone if we maintain discipline about the scope of each change set. In general, if you find a bug while working on a specific feature, file a separate issue for the bug, check if you can assign it to yourself, and fix it independently of the feature. This helps the community differentiate between bug fixes and features, and allows us to build stable maintenance releases.
 
@@ -30,4 +30,4 @@ Finally, please write a good, clear commit message, with a short, descriptive ti
 
 When the changes are ready to go, submit a pull request against the main repository from the branch on your fork. To help get attention from the community, assign reviewers to the pull request that you have been communicating with and who have permission to merge pull requests. Work with reviewers to make any necessary final adjustments to your work. When the discussion is complete, your pull request will be merged. Congratulations!
 
-Once your changes are merged, Cloudera staff will import them into the copies maintained along with Cloudera Director code itself, so that later versions of Cloudera Director will automatically include them.
+Once your changes are merged, Cloudera staff will import them into the copies maintained along with Cloudera Altus Director code itself, so that later versions of Cloudera Altus Director will automatically include them.

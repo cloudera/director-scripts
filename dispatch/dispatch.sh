@@ -31,7 +31,7 @@ if [[ ! -x "$(command -v wget)" ]]; then
 fi
 
 #
-# Cloudera Director server credentials and URL
+# Cloudera Altus Director server credentials and URL
 #
 
 DIRECTOR_SERVER="http://localhost:7189"

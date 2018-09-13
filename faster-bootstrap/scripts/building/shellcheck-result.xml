@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<checkstyle version='4.3'>
+<file name='base&#95;amis&#95;eu&#45;central&#45;1.sh' >
+<error line='21' column='12' severity='warning' message='BASE&#95;AMIS appears unused. Verify it or export it.' source='ShellCheck.SC2034' />
+</file>
+<file name='base&#95;amis&#95;us&#45;east&#45;1.sh' >
+<error line='21' column='12' severity='warning' message='BASE&#95;AMIS appears unused. Verify it or export it.' source='ShellCheck.SC2034' />
+</file>
+<file name='base&#95;amis&#95;us&#45;east&#45;2.sh' >
+<error line='21' column='12' severity='warning' message='BASE&#95;AMIS appears unused. Verify it or export it.' source='ShellCheck.SC2034' />
+</file>
+<file name='base&#95;amis&#95;us&#45;west&#45;1.sh' >
+<error line='21' column='12' severity='warning' message='BASE&#95;AMIS appears unused. Verify it or export it.' source='ShellCheck.SC2034' />
+</file>
+<file name='base&#95;amis&#95;us&#45;west&#45;2.sh' >
+<error line='21' column='12' severity='warning' message='BASE&#95;AMIS appears unused. Verify it or export it.' source='ShellCheck.SC2034' />
+</file>
+</checkstyle>

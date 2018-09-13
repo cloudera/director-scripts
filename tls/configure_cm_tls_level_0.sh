@@ -162,6 +162,6 @@ echo_v "    accept the self-signed server certificate"
 echo_v "    restart the management services"
 echo_v
 
-echo_v "Certificate contents for updating Cloudera Director:"
+echo_v "Certificate contents for updating Cloudera Altus Director:"
 echo_v
 [[ $VERBOSE == "1" ]] && sudo cat "${PKI_HOME}/${HOSTNAME}-server.crt"

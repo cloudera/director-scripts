@@ -22,7 +22,7 @@
 cat > /etc/NetworkManager/dispatcher.d/12-register-dns <<"EOF"
 #!/bin/bash
 # NetworkManager Dispatch script
-# Deployed by Cloudera Director Bootstrap
+# Deployed by Cloudera Altus Director Bootstrap
 #
 # Expected arguments:
 #    $1 - interface

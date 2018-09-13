@@ -121,10 +121,10 @@ def main():
     parser.add_argument('--admin-password', default="admin",
                         help='Password for the administrative user (defaults to %(default)s)')
     parser.add_argument('--server', default="http://localhost:7189",
-                        help="Cloudera Director server URL (defaults to %(default)s)")
+                        help="Cloudera Altus Director server URL (defaults to %(default)s)")
     parser.add_argument('--cafile', default=None,
-                        help='Path to file containing trusted certificate(s) for Director ' +
-                        '(defaults to %(default)s); required when Cloudera Director is ' +
+                        help='Path to file containing trusted certificate(s) for Cloudera Altus Director ' +
+                        '(defaults to %(default)s); required when Cloudera Altus Director is ' +
                         'configured for https')
     parser.add_argument('--disable', action='store_true',
                         help='Disable TLS communication instead of enabling it')

@@ -1,6 +1,6 @@
-# How to Use a Preloaded AMI with Cloudera Director
+# How to Use a Preloaded AMI with Cloudera Altus Director
 
-Now that you have built a preloaded AMI, how do you use it to make Cloudera Director's bootstrap process faster?
+Now that you have built a preloaded AMI, how do you use it to make Cloudera Altus Director's bootstrap process faster?
 
 ## The Gains
 

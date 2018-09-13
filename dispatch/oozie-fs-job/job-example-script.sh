@@ -51,7 +51,7 @@ JOB_PROP_EOF
 # Submit the Oozie workflow job
 
 # This script is uploaded to and run on the master node of the remote cluster
-# that is provisioned by Cloudera Director. And OOZIE_URL is defined to point
+# that is provisioned by Cloudera Altus Director. And OOZIE_URL is defined to point
 # to the Oozie service that is running on this master node.
 OOZIE_URL="http://localhost:11000/oozie"
 OOZIE_RET="$(sudo -u hdfs oozie job -oozie ${OOZIE_URL} -run -config ${JOB_PROP})"

@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# These are base AMIs for various operating systems that the Cloudera Director
+# These are base AMIs for various operating systems that the Cloudera Altus Director
 # team uses for their own testing in the us-east-1 region. While they are
 # considered good choices, we cannot guarantee that they will always work.
 
@@ -22,13 +22,18 @@ declare -A BASE_AMIS=(
 #  ["centos64"]="ami-26cc934e pv ec2-user /dev/sda1"
 #  ["centos65"]="ami-9ade2af2 pv ec2-user /dev/sda"
   ["centos67"]="ami-1c221e76 hvm centos /dev/sda1"
+  ["centos69"]="ami-1585c46a hvm centos /dev/sda1"
   ["centos72"]="ami-6d1c2007 hvm centos /dev/sda1"
   ["centos73"]="ami-46c1b650 hvm centos /dev/sda1"
   ["centos74"]="ami-02e98f78 hvm centos /dev/sda1"
+  ["centos75"]="ami-9887c6e7 hvm centos /dev/sda1"
 #  ["rhel64"]="ami-a25415cb pv ec2-user /dev/sda1"
 #  ["rhel65"]="ami-1643ff7e pv ec2-user /dev/sda1"
   ["rhel66"]="ami-b0fed2d8 hvm ec2-user /dev/sda1"
   ["rhel67"]="ami-0d28fe66 hvm ec2-user /dev/sda1"
   ["rhel71"]="ami-dbc96ab0 hvm ec2-user /dev/sda1"
   ["rhel72"]="ami-85241def hvm ec2-user /dev/sda1"
+  ["rhel73"]="ami-b63769a1 hvm ec2-user /dev/sda1"
+  ["rhel74"]="ami-76a3970c hvm ec2-user /dev/sda1"
+  ["rhel75"]="ami-6871a115 hvm ec2-user /dev/sda1"
 )

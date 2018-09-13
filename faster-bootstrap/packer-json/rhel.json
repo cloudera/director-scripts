@@ -3,8 +3,10 @@
         "region": "",
         "parcel_url": "",
         "cm_repository_url": "",
+        "cm_gpg_key_url": "",
         "jdk_repository_url": "",
         "ami": "",
+        "os": "",
         "vpc_id": "",
         "subnet_id": "",
         "security_group_id": "",
@@ -14,7 +16,8 @@
         "ssh_username": "",
         "associate_public_ip_address": "false",
         "java_version": "",
-        "preextract_parcel": "false"
+        "preextract_parcel": "false",
+        "c6": "true"
     },
     "builders": [
     {
@@ -35,7 +38,7 @@
         "subnet_id": "{{user `subnet_id`}}",
         "security_group_id": "{{user `security_group_id`}}",
         "ssh_pty": "true",
-        "ssh_private_ip": "false",
+        "ssh_interface": "private_ip",
         "associate_public_ip_address": "{{user `associate_public_ip_address`}}"
     }],
     "provisioners": [
@@ -71,6 +74,12 @@
         "pause_before": "120s"
     },
     {
+        "type": "shell",
+        "scripts": ["scripts/provisioning/hue-c6.sh"],
+        "environment_vars": ["OS={{user `os`}}"],
+        "execute_command": "chmod +x {{ .Path }}; if [[ {{user `c6`}} == true ]]; then sudo {{ .Vars }} {{ .Path }}; fi"
+    },
+    {
         "type": "file",
         "source": "files/jce/",
         "destination": "/tmp"
@@ -82,6 +91,7 @@
                     "scripts/provisioning/parcel_provisioner.sh",
                     "scripts/provisioning/rhel_destroy_ssh_host_keys.sh"],
         "environment_vars": ["PARCEL_URL={{user `parcel_url`}}", "CM_REPOSITORY_URL={{user `cm_repository_url`}}",
+                             "CM_GPG_KEY_URL={{user `cm_gpg_key_url`}}",
                              "JAVA_VERSION={{user `java_version`}}",
                              "JDK_REPOSITORY_URL={{user `jdk_repository_url`}}",
                              "PREEXTRACT_PARCEL={{user `preextract_parcel`}}"]

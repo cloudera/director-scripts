@@ -6,7 +6,7 @@ terminating the cluster using simple tools like wget and jq.
 
 ## Preconditions
 
-Before running the dispatch script you need to install the Cloudera Director server
+Before running the dispatch script you need to install the Cloudera Altus Director server
 and create a valid cluster configuration file that can be used to create a cluster
 via bootstrap-remote.
 

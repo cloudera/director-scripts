@@ -14,7 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-CM_GPG_KEY=${CM_GPG_KEY:-https://archive.cloudera.com/cm5/redhat/6/x86_64/cm/RPM-GPG-KEY-cloudera}
+if [[ -z $CM_GPG_KEY_URL ]]; then
+  TEMP_REPO_URL="${CM_REPOSITORY_URL%/}" # strip trailing slash if present
+  if [[ $TEMP_REPO_URL =~ ^https?://archive.cloudera.com/cm6 ]]; then
+    CM_GPG_KEY_URL="${TEMP_REPO_URL}/RPM-GPG-KEY-cloudera"
+  elif [[ $TEMP_REPO_URL =~ ^https?://archive.cloudera.com/cm5 ]]; then
+    CM_GPG_KEY_URL="${TEMP_REPO_URL%/*}/RPM-GPG-KEY-cloudera"
+  else
+    echo "URL for RPM GPG key cannot be determined from CM repository URL ${CM_REPOSITORY_URL}."
+    echo "Please specify the URL for the key in the CM_GPG_KEY_URL variable."
+  fi
+fi
 PREBAKED_DIRECTORY=/opt/cloudera/director
 PREBAKED_GPG_KEY=${PREBAKED_DIRECTORY}/rhel-key
 
@@ -23,7 +33,8 @@ sudo yum -y install ntp curl nscd screen python bc rng-tools
 
 # Director can avoid downloading the GPG key for the Cloudera repository by using a prebaked key file
 sudo mkdir -p "${PREBAKED_DIRECTORY}"
-sudo curl "${CM_GPG_KEY}" -o "${PREBAKED_GPG_KEY}"
+echo "Installing RPM GPG key from ${CM_GPG_KEY_URL} to ${PREBAKED_GPG_KEY}"
+sudo curl "${CM_GPG_KEY_URL}" -o "${PREBAKED_GPG_KEY}"
 
 # Configure the Cloudera Manager repository
 echo "Configuring Cloudera Manager repository at $CM_REPOSITORY_URL"
@@ -31,7 +42,7 @@ sudo tee /etc/yum.repos.d/cloudera-manager.repo > /dev/null <<REPO
 [cloudera-manager]
 name=Cloudera Manager
 baseurl=${CM_REPOSITORY_URL}
-gpgKey=${CM_GPG_KEY}
+gpgKey=${CM_GPG_KEY_URL}
 gpgcheck=1
 REPO
 sudo rpm --import "${PREBAKED_GPG_KEY}"
@@ -51,8 +62,8 @@ fi
 # Determine the name of the JDK package
 case $JAVA_VERSION in
   1\.8)
-    # Package name for RPM available from Cloudera Director repo
-    director_ver=$(basename ${JDK_REPOSITORY_URL})
+    # Package name for RPM available from Cloudera Altus Director repo
+    director_ver=$(basename "${JDK_REPOSITORY_URL}")
     if [[ $(echo "$director_ver >= 2.4" | bc) -eq 1 ]]; then
       JDK_PACKAGE="oracle-j2sdk${JAVA_VERSION}"
     else
@@ -60,16 +71,19 @@ case $JAVA_VERSION in
     fi
     ;;
   *)
-    # Package name for RPM available from Cloudera Manager or Cloudera Director repo
+    # Package name for RPM available from Cloudera Manager or Cloudera Altus Director repo
     JDK_PACKAGE="oracle-j2sdk${JAVA_VERSION}"
     ;;
 esac
 
-echo "Installing JDK and CM"
-sudo yum -y install "$JDK_PACKAGE" cloudera-manager-agent cloudera-manager-daemons cloudera-manager-server cloudera-manager-server-db-2
+echo "Installing JDK"
+sudo yum -y install "$JDK_PACKAGE"
 JAVA_HOME=$(ls -d /usr/java/*)
-sudo alternatives --install /usr/bin/java java ${JAVA_HOME}/bin/java 1
-sudo alternatives --install /usr/bin/javac javac ${JAVA_HOME}/bin/javac 1
+sudo alternatives --install /usr/bin/java java "${JAVA_HOME}/bin/java" 1
+sudo alternatives --install /usr/bin/javac javac "${JAVA_HOME}/bin/javac" 1
+
+echo "Installing CM"
+sudo yum -y install cloudera-manager-agent cloudera-manager-daemons cloudera-manager-server cloudera-manager-server-db-2
 
 # Define service_control
 . /tmp/service_control.sh

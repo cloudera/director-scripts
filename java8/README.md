@@ -4,7 +4,7 @@
 
 In order to use this bootstrap script, you'll need to configure your deployment to use a
 `javaInstallationStrategy` of `NONE`. This can be done using a configuration file or using the
-Cloudera Director API, as this property is not currently configurable in the UI.
+Cloudera Altus Director API, as this property is not currently configurable in the UI.
 An example of how this would look in a configuration file:
 
 ```

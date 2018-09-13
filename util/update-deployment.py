@@ -53,11 +53,11 @@ def main():
     parser = argparse.ArgumentParser(prog='change-deployment-password.py')
 
     parser.add_argument('--admin-username', default='admin',
-                        help='Name of a user with administrative access to Cloudera Director (defaults to %(default)s)')
+                        help='Name of a user with administrative access to Cloudera Altus Director (defaults to %(default)s)')
     parser.add_argument('--admin-password', default='admin',
                         help='Password for the administrative user (defaults to %(default)s)')
     parser.add_argument('--server', default='http://localhost:7189',
-                        help="Cloudera Director server URL (defaults to %(default)s)")
+                        help="Cloudera Altus Director server URL (defaults to %(default)s)")
 
     parser.add_argument('--debug', default=False, action='store_true',
                         help="Whether to provide additional debugging output (defaults to %(default)s)")

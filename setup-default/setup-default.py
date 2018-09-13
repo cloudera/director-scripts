@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Simple script that shows how to use the Cloudera Director API to initialize
+# Simple script that shows how to use the Cloudera Altus Director API to initialize
 # the environment and instance templates
 
 import argparse
@@ -85,7 +85,7 @@ def create_environment(client, config, provider_type, cloud_provider_metadata):
     env.credentials = credentials
     env.provider = provider
 
-    # Post this information to Cloudera Director (to be validated and stored)
+    # Post this information to Cloudera Altus Director (to be validated and stored)
 
     api = EnvironmentsApi(client)
     try:
@@ -498,11 +498,11 @@ def main():
     parser = argparse.ArgumentParser(prog='setup-default.py')
 
     parser.add_argument('--admin-username', default='admin',
-                        help='Name of a user with administrative access to Cloudera Director (defaults to %(default)s)')
+                        help='Name of a user with administrative access to Cloudera Altus Director (defaults to %(default)s)')
     parser.add_argument('--admin-password', default='admin',
                         help='Password for the administrative user (defaults to %(default)s)')
     parser.add_argument('--server', default='http://localhost:7189',
-                        help="Cloudera Director server URL (defaults to %(default)s)")
+                        help="Cloudera Altus Director server URL (defaults to %(default)s)")
     parser.add_argument('--debug', default=False, action='store_true',
                         help="Whether to provide additional debugging output (defaults to %(default)s)")
 

@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<checkstyle version='4.3'>
+<file name='&#42;.sh' >
+<error line='1' column='1' severity='error' message='&#42;.sh&#58; openFile&#58; does not exist &#40;No such file or directory&#41;' source='ShellCheck' />
+</file>
+</checkstyle>

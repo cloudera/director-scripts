@@ -25,7 +25,7 @@ usage()
 {
   cat << EOF
 This script will create a new AMI and preload it with CDH parcels to speed up
-bootstrapping time for Cloudera Director.
+bootstrapping time for Cloudera Altus Director.
 
 You must ensure AWS credentials are available in the environment for this to
 work properly. Please refer to Packer documentation here:
@@ -42,9 +42,11 @@ Usage: $0 [options] <aws-region> <os> [<name>] [<parcel-url>] [<repository-url>]
   [<name>]:      An optional descriptive name for the new AMI.
       Default is calculated dynamically (specified by "AUTO")
   [<parcel-url>]:      Optional parcel URL to use for preloading.
-      Default https://archive.cloudera.com/cdh5/parcels/5.15/
+      Default https://archive.cloudera.com/cdh6/6.0.0/parcels/
   [<repository-url>]:  Optional Cloudera Manager yum repo to use for preloading.
-      Default https://archive.cloudera.com/cm5/redhat/7/x86_64/cm/5.15/
+      Default https://archive.cloudera.com/cm6/6.0.0/redhat7/yum/
+  [<repository-key-url>]:  Optional URL for Cloudera Manager yum repo GPG key.
+      Required only if repository-url is not at archive.cloudera.com
 
 Be sure to specify <repository-url> for operating systems other than RHEL 7 or
 CentOS 7.
@@ -58,7 +60,7 @@ OPTIONS:
     Run packer in debug mode
   -j <version>
     Install a specific Java version
-        Valid choices: 1.7 (default), 1.8
+        Valid choices: 1.7, 1.8 (default)
   -J <jdk-repository>
     Yum repo to use for JDK RPM
         Valid choices: Director (default), CM
@@ -66,6 +68,8 @@ OPTIONS:
     Pre-extract CDH parcels
   -P
     Associate public IP address
+  -6
+    Configure image for CDH 6
 
 For the -a option, specify for <ami-info> a quoted string with the following
 elements, separated by spaces:
@@ -127,12 +131,13 @@ get_director_yum_url() {
 }
 
 AMI_OPT=
+C6=
 DEBUG=
-JAVA_VERSION=1.7
+JAVA_VERSION=1.8
 JDK_REPO=Director
 PRE_EXTRACT=
 PUBLIC_IP=
-while getopts "a:dj:J:pPh" opt; do
+while getopts "a:dj:J:pP6h" opt; do
   case $opt in
     a)
       AMI_OPT="$OPTARG"
@@ -152,6 +157,9 @@ while getopts "a:dj:J:pPh" opt; do
     P)
       PUBLIC_IP=1
       ;;
+    6)
+      C6=1
+      ;;
     h)
       usage
       exit
@@ -164,7 +172,7 @@ while getopts "a:dj:J:pPh" opt; do
 done
 shift $((OPTIND - 1))
 
-if [ $# -lt 2 ] || [ $# -gt 5 ]; then
+if [ $# -lt 2 ] || [ $# -gt 6 ]; then
     usage
     exit 1
 fi
@@ -176,14 +184,29 @@ else
     echo "Found packer version: $(packer version)"
 fi
 
+DEFAULT_CDH_URL=https://archive.cloudera.com/cdh6/6.0/parcels/
+
 # Gather arguments into variables
 AWS_REGION=$1
 OS=$2
 NAME=${3-AUTO}
-CDH_URL=${4-"https://archive.cloudera.com/cdh5/parcels/5.15/"}
-CM_REPO_URL=${5-"https://archive.cloudera.com/cm5/redhat/7/x86_64/cm/5.15/"}
+CDH_URL=${4-${DEFAULT_CDH_URL}}
+CM_REPO_URL=${5-"https://archive.cloudera.com/cm6/6.0/redhat7/yum/"}
+CM_GPG_KEY_URL=$6
+
+# Assume C6 if CDH_URL is not provided or is the default value, and the -6
+# option wasn't given
+if [[ $CDH_URL == "$DEFAULT_CDH_URL" && -z $C6 ]]; then
+  C6=1
+fi
 
 # Validate OS TBD
+
+# Validate CM_GPG_KEY_URL
+if [[ -z $CM_GPG_KEY_URL && ! $CM_REPO_URL =~ ^https?://archive.cloudera.com ]]; then
+  echo "The URL for the RPM GPG key must be supplied for a custom Cloudera Manager repository"
+  exit 3
+fi
 
 # Look up AMI if necessary
 if [[ -z $AMI_OPT ]]; then
@@ -238,19 +261,12 @@ fi
 # Validate JDK repo, set JDK repo URL
 case $JDK_REPO in
   CM)
-    # Only 1.7 is available
-    if [[ $JAVA_VERSION != "1.7" ]]; then
-      echo "JDK $JAVA_VERSION is not available from the Cloudera Manager repository"
-      echo "Use '-J Director' for JDK $JAVA_VERSION"
-      exit 6
-    fi
     JDK_REPO_URL="$CM_REPO_URL"
     ;;
   Director)
-    # 1.7 and 1.8 are available
     JDK_REPO_URL=$(get_director_yum_url "$OS")
     if [[ -z $JDK_REPO_URL ]]; then
-      echo "Cloudera Director yum repo is not available for OS $OS"
+      echo "Cloudera Altus Director yum repo is not available for OS $OS"
       exit 6
     fi
     ;;
@@ -263,15 +279,22 @@ esac
 # Set up packer variables
 PACKER_VARS_ARRAY=( $PACKER_VARS )
 PACKER_VARS_ARRAY+=(-var "region=$AWS_REGION" -var "parcel_url=$PARCEL_URL" -var "cm_repository_url=$CM_REPO_URL")
+if [[ -n $CM_GPG_KEY_URL ]]; then
+  PACKER_VARS_ARRAY+=(-var "cm_gpg_key_url=$CM_GPG_KEY_URL")
+fi
 PACKER_VARS_ARRAY+=(-var "jdk_repository_url=$JDK_REPO_URL")
 PACKER_VARS_ARRAY+=(-var "ami=$AMI" -var "ami_virtualization_type=$VIRTUALIZATION" -var "ssh_username=$USERNAME" -var "root_device_name=$ROOT_DEVICE_NAME")
 PACKER_VARS_ARRAY+=(-var "ami_prefix=$NAME")
+PACKER_VARS_ARRAY+=(-var "os=$OS")
 PACKER_VARS_ARRAY+=(-var "java_version=$JAVA_VERSION")
 if [[ -n $PRE_EXTRACT ]]; then
   PACKER_VARS_ARRAY+=(-var "preextract_parcel=true")
 fi
 if [[ -n $PUBLIC_IP ]]; then
   PACKER_VARS_ARRAY+=(-var "associate_public_ip_address=true")
+fi
+if [[ -z $C6 ]]; then
+  PACKER_VARS_ARRAY+=(-var "c6=false")
 fi
 
 # Set up other packer options

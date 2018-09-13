@@ -14,11 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# These are base AMIs for various operating systems that the Cloudera Director
+# These are base AMIs for various operating systems that the Cloudera Altus Director
 # team uses for their own testing in the us-east-2 region. While they are
 # considered good choices, we cannot guarantee that they will always work.
 
 declare -A BASE_AMIS=(
+  ["centos69"]="ami-24093741 hvm centos /dev/sda1"
   ["centos73"]="ami-18f8df7d hvm centos /dev/sda1"
   ["centos74"]="ami-e0eac385 hvm centos /dev/sda1"
+  ["centos75"]="ami-9c0638f9 hvm centos /dev/sda1"
+  ["rhel73"]="ami-0932686c hvm ec2-user /dev/sda1"
+  ["rhel74"]="ami-cebe94ab hvm ec2-user /dev/sda1"
+  ["rhel75"]="ami-03291866 hvm ec2-user /dev/sda1"
 )

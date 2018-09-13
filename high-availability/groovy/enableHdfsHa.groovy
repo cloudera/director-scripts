@@ -223,7 +223,7 @@ The target cluster must satisfy the following criteria:
     Includes 3+ JOURNALNODES
 
 This script cannot automatically select hosts for JOURNALNODES and thus requires the JOURNALNODES
-to be pre-configured. These can be defined in the cluster template that Cloudera Director uses.
+to be pre-configured. These can be defined in the cluster template that Cloudera Altus Director uses.
 
 Enabling HA will replace the SECONDARYNAMENODE with a NAMENODE role and will colocate
 FAILOVERCONTROLLER roles with the NAMENODEs.

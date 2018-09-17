@@ -89,7 +89,3 @@ then
   sudo touch /opt/cloudera/parcels/CDH/.dont_delete
   echo "Done"
 fi
-
-echo "Sync Linux volumes with EBS."
-sudo sync
-sleep 5

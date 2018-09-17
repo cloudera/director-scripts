@@ -1,0 +1,1 @@
+../../../faster-bootstrap/scripts/provisioning/hue-c6.sh

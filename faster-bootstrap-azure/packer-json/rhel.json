@@ -1,0 +1,122 @@
+{
+    "variables": {
+        "azure_client_id": "",
+        "azure_client_secret": "",
+        "azure_subscription_id": "",
+
+        "azure_managed_image_resource_group": "",
+        "azure_managed_image_name": "",
+
+        "azure_location": "",
+        "azure_cloud_environment": "Public",
+
+        "azure_image_offer": "",
+        "azure_image_publisher": "",
+        "azure_image_sku": "",
+        "azure_image_version": "latest",
+
+        "azure_image_plan_name": "",
+        "azure_image_plan_product": "",
+        "azure_image_plan_publisher":"",
+
+        "parcel_url": "",
+        "cm_repository_url": "",
+        "cm_gpg_key_url": "",
+        "jdk_repository_url": "",
+
+        "vm_size": "Standard_D8_v3",
+
+        "java_version": "",
+        "preextract_parcel": "false",
+        "c6": "true"
+    },
+    "builders": [
+        {
+            "type": "azure-arm",
+            "ssh_pty" : true,
+            "cloud_environment_name": "{{user `azure_cloud_environment`}}",
+            "client_id": "{{user `azure_client_id`}}",
+            "client_secret": "{{user `azure_client_secret`}}",
+            "subscription_id": "{{user `azure_subscription_id`}}",
+            "image_publisher": "{{user `azure_image_publisher`}}",
+            "image_offer": "{{user `azure_image_offer`}}",
+            "image_sku": "{{user `azure_image_sku`}}",
+            "image_version": "{{user `azure_image_version`}}",
+            "plan_info": {
+                "plan_publisher": "{{user `azure_image_plan_publisher`}}",
+                "plan_product": "{{user `azure_image_plan_product`}}",
+                "plan_name": "{{user `azure_image_plan_name`}}"
+            },
+            "managed_image_name": "{{user `azure_managed_image_name`}}",
+            "managed_image_resource_group_name": "{{user `azure_managed_image_resource_group`}}",
+            "os_type": "Linux",
+            "location": "{{user `azure_location`}}",
+            "temp_resource_group_name": "{{user `temp_resource_group_name`}}",
+            "build_resource_group_name": "{{user `build_resource_group_name`}}",
+            "custom_data_file": "{{user `custom_data_file`}}",
+            "os_disk_size_gb": "{{user `os_disk_size_gb`}}",
+            "temp_compute_name": "{{user `temp_compute_name`}}",
+            "tenant_id": "{{user `tenant_id`}}",
+            "private_virtual_network_with_public_ip": "{{user `private_virtual_network_with_public_ip`}}",
+            "virtual_network_name": "{{user `virtual_network_name`}}",
+            "virtual_network_resource_group_name": "{{user `virtual_network_resource_group_name`}}",
+            "virtual_network_subnet_name": "{{user `virtual_network_subnet_name`}}",
+            "vm_size": "{{user `vm_size`}}"
+    }],
+    "provisioners": [
+    {
+        "type": "file",
+        "source": "scripts/provisioning/internal/",
+        "destination": "/tmp"
+    },
+    {
+        "type": "shell",
+        "inline": "shopt -s nullglob; for s in /tmp/internal*.sh; do bash \"$s\"; done"
+    },
+    {
+        "type": "shell",
+        "script": "scripts/provisioning/rewrite_root_disk_partition_table.sh",
+        "environment_vars": ["PATH=/bin:/sbin:/usr/bin:/usr/sbin"],
+        "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E {{ .Path }}"
+    },
+    {
+        "type": "shell",
+        "inline": "sudo reboot",
+        "expect_disconnect": true
+    },
+    {
+        "type": "shell",
+        "script": "scripts/provisioning/resize_root_filesystem.sh",
+        "environment_vars": ["PATH=/bin:/sbin:/usr/bin:/usr/sbin"],
+        "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E {{ .Path }}",
+        "pause_before": "120s"
+    },
+    {
+        "type": "file",
+        "source": "scripts/provisioning/service_control.sh",
+        "destination": "/tmp/service_control.sh"
+    },
+    {
+        "type": "shell",
+        "scripts": ["scripts/provisioning/hue-c6.sh"],
+        "environment_vars": ["OS={{user `os`}}"],
+        "execute_command": "chmod +x {{ .Path }}; if [[ {{user `c6`}} == true ]]; then sudo {{ .Vars }} {{ .Path }}; fi"
+    },
+    {
+        "type": "file",
+        "source": "files/jce/",
+        "destination": "/tmp"
+    },
+    {
+        "type": "shell",
+        "scripts": ["scripts/provisioning/rhel_provisioner.sh",
+                    "scripts/provisioning/setup_unlimited_strength_jce.sh",
+                    "scripts/provisioning/parcel_provisioner.sh",
+                    "scripts/provisioning/rhel_deprovision_image.sh"],
+        "environment_vars": ["PARCEL_URL={{user `parcel_url`}}", "CM_REPOSITORY_URL={{user `cm_repository_url`}}",
+                             "CM_GPG_KEY_URL={{user `cm_gpg_key_url`}}",
+                             "JAVA_VERSION={{user `java_version`}}",
+                             "JDK_REPOSITORY_URL={{user `jdk_repository_url`}}",
+                             "PREEXTRACT_PARCEL={{user `preextract_parcel`}}"]
+    }]
+}

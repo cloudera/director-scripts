@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# (c) Copyright 2015 Cloudera, Inc.
+# (c) Copyright 2018 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,27 +24,29 @@ fi
 usage()
 {
   cat << EOF
-This script will create a new AMI and preload it with CDH parcels to speed up
-bootstrapping time for Cloudera Altus Director.
+This script will create a new Managed Image and preload it with CDH parcels
+to speed up bootstrapping time for Cloudera Altus Director.
 
-You must ensure AWS credentials are available in the environment for this to
-work properly. Please refer to Packer documentation here:
-https://www.packer.io/docs/builders/amazon-ebs.html.
+You must ensure Azure credentials are placed into credentials.json for the
+script to work properly. See the credentials.json.example file for the proper
+format.
 
 Extra packer options can be provided in the PACKER_VARS environment variable
 prior to executing this script.
 
-Usage: $0 [options] <aws-region> <os> [<name>] [<parcel-url>] [<repository-url>]
+Usage: $0 [options] <azure-region> <resource-group> <os> [<name>] [<parcel-url>] [<repository-url>]
 
-  <aws-region>:  The AWS region that you want the new AMI to be housed on.
-  <os>:          The OS that you want to use as a base.
-      Valid choices: rhel6x, rhel7x, centos6x, centos7x (x = minor version)
-  [<name>]:      An optional descriptive name for the new AMI.
+  <azure-region>:  The Azure region where you want the new Image to be created.
+  <resource-group>: The Azure resource group where the new image should be created.
+  <os>:  The OS that you want to use as a base.
+      Valid choices: centos67|centos68|centos72|centos74
+                     rhel67|rhel68|rhel69|rhel610|rhel72|rhel73|rhel74|rhel74
+  [<name>]:  An optional descriptive name for the new Image.
       Default is calculated dynamically (specified by "AUTO")
-  [<parcel-url>]:      Optional parcel URL to use for preloading.
+  [<parcel-url>]:  Optional parcel URL to use for preloading.
       Default https://archive.cloudera.com/cdh6/6.0.0/parcels/
   [<repository-url>]:  Optional Cloudera Manager yum repo to use for preloading.
-      Default https://archive.cloudera.com/cm6/6.0.0/redhat7/yum/
+      Default https://archive.cloudera.com/cm6/6.0.0/redhat7/yum/ or https://archive.cloudera.com/cm6/6.0.0/redhat6/yum/
   [<repository-key-url>]:  Optional URL for Cloudera Manager yum repo GPG key.
       Required only if repository-url is not at archive.cloudera.com
 
@@ -54,45 +56,41 @@ CentOS 7.
 OPTIONS:
   -h
     Show this help message
-  -a <ami-info>
-    Use a specific base AMI
   -d
     Run packer in debug mode
   -j <version>
     Install a specific Java version
-        Valid choices: 1.7, 1.8 (default)
+        Valid choices: 1.7 , 1.8 (default)
   -J <jdk-repository>
     Yum repo to use for JDK RPM
         Valid choices: Director (default), CM
   -p
     Pre-extract CDH parcels
-  -P
-    Associate public IP address
   -6
     Configure image for CDH 6
-
-For the -a option, specify for <ami-info> a quoted string with the following
-elements, separated by spaces:
-
-  ami-id "pv"|"hvm" ssh-username root-device-name
-
-Example: -a "ami-00000000 hvm centos72 /dev/sda1"
+  -s
+    Image OS Volume Size in GB
+  -C <Azure Cloud Environment>
+        Valid choices:  Public (default), China, Germany, USGovernment
 
 EOF
 }
 
-# Finds the recommended AMI for a region and OS
-find_base_ami_info()
+# Populates BASE_IMAGES and BASE_PLANS arrays
+source scripts/building/base_images.sh
+
+# Finds the base image for selected OS
+find_base_image()
 {
   local os="$1"
-  local region="$2"
+  echo "${BASE_IMAGES[$os]}"
+}
 
-  if [[ ! -f "scripts/building/base_amis_${region}.sh" ]]; then
-    echo "unsupported_region"
-  else
-    source "scripts/building/base_amis_${region}.sh"
-    echo "${BASE_AMIS[$os]}"
-  fi
+# Finds the base image for selected OS
+find_base_image_plan()
+{
+  local os="$1"
+  echo "${BASE_PLANS[$os]}"
 }
 
 # Parses the parcel for an OS from the list of parcels at the supplied URL.
@@ -103,10 +101,10 @@ get_parcel_url()
 
   case $os in
     centos6* | rhel6*)
-      echo "${cdh_url}$(curl -L -s "${cdh_url}" | grep "el6.parcel<" | sed -E "s/.*>(.*parcel)<\/a.*/\1/" 2>/dev/null)"
+      echo "${cdh_url}$(curl -L -s "${cdh_url}" | grep "el6.parcel<" | sed -E "s/.*>(.*parcel)<\\/a.*/\\1/" 2>/dev/null)"
       ;;
     centos7* | rhel7*)
-      echo "${cdh_url}$(curl -L -s "${cdh_url}" | grep "el7.parcel<" | sed -E "s/.*>(.*parcel)<\/a.*/\1/" 2>/dev/null)"
+      echo "${cdh_url}$(curl -L -s "${cdh_url}" | grep "el7.parcel<" | sed -E "s/.*>(.*parcel)<\\/a.*/\\1/" 2>/dev/null)"
       ;;
     *)
       echo ""
@@ -130,18 +128,15 @@ get_director_yum_url() {
   esac
 }
 
-AMI_OPT=
 C6=
 DEBUG=
 JAVA_VERSION=1.8
 JDK_REPO=Director
 PRE_EXTRACT=
-PUBLIC_IP=
-while getopts "a:dj:J:pP6h" opt; do
+CLOUD=Public
+OS_VOL_SIZE=
+while getopts "dj:J:p6C:s:h" opt; do
   case $opt in
-    a)
-      AMI_OPT="$OPTARG"
-      ;;
     d)
       DEBUG=1
       ;;
@@ -154,11 +149,14 @@ while getopts "a:dj:J:pP6h" opt; do
     p)
       PRE_EXTRACT=1
       ;;
-    P)
-      PUBLIC_IP=1
-      ;;
     6)
       C6=1
+      ;;
+    C)
+      CLOUD="$OPTARG"
+      ;;
+    s)
+      OS_VOL_SIZE="$OPTARG"
       ;;
     h)
       usage
@@ -187,12 +185,17 @@ fi
 DEFAULT_CDH_URL=https://archive.cloudera.com/cdh6/6.0.0/parcels/
 
 # Gather arguments into variables
-AWS_REGION=$1
-OS=$2
-NAME=${3-AUTO}
-CDH_URL=${4-${DEFAULT_CDH_URL}}
-CM_REPO_URL=${5-"https://archive.cloudera.com/cm6/6.0.0/redhat7/yum/"}
-CM_GPG_KEY_URL=$6
+AZURE_REGION=$1
+RG=$2
+OS=$3
+NAME=${4-AUTO}
+CDH_URL=${5-${DEFAULT_CDH_URL}}
+if [[ $OS =~ ^(centos|rhel)7.*$ ]]; then
+  CM_REPO_URL=${6-"https://archive.cloudera.com/cm6/6.0.0/redhat7/yum/"}
+else
+  CM_REPO_URL=${6-"https://archive.cloudera.com/cm6/6.0.0/redhat6/yum/"}
+fi
+CM_GPG_KEY_URL=$7
 
 # Assume C6 if CDH_URL is not provided or is the default value, and the -6
 # option wasn't given
@@ -208,34 +211,25 @@ if [[ -z $CM_GPG_KEY_URL && ! $CM_REPO_URL =~ ^https?://archive.cloudera.com ]];
   exit 3
 fi
 
-# Look up AMI if necessary
-if [[ -z $AMI_OPT ]]; then
-  AMI_INFO=( $(find_base_ami_info "$OS" "$AWS_REGION") )
-  if [[ ${AMI_INFO[0]} == "unsupported_region" ]]; then
-    echo "Base AMIs for region $AWS_REGION are not recorded, use -a to specify an AMI"
-    exit 3
-  elif [[ -z "${AMI_INFO[*]}" ]]; then
-    echo "A base AMI is not recorded for OS $OS in $AWS_REGION, use -a to specify an AMI"
-    exit 3
-  fi
-else
-  AMI_INFO=( $AMI_OPT )
-fi
-echo "Using AMI ${AMI_INFO[0]} for OS $OS"
+IMAGE=$(find_base_image "$OS" )
+IFS=":" read -r -a IMAGE_PARTS <<< "$IMAGE"
+IMAGE_PUBLISHER=${IMAGE_PARTS[0]}
+IMAGE_OFFER=${IMAGE_PARTS[1]}
+IMAGE_SKU=${IMAGE_PARTS[2]}
+IMAGE_VERSION=${IMAGE_PARTS[3]}
 
-AMI=${AMI_INFO[0]}
-VIRTUALIZATION=${AMI_INFO[1]}
-if [[ $VIRTUALIZATION != "pv" && $VIRTUALIZATION != "hvm" ]]; then
-  echo "Invalid AMI virtualization type $VIRTUALIZATION"
-  usage
-  exit 3
-fi
-USERNAME=${AMI_INFO[2]}
-ROOT_DEVICE_NAME=${AMI_INFO[3]}
+IMAGE_PLAN=$(find_base_image_plan "$OS" )
+IFS=":" read -r -a IMAGE_PLAN_PARTS <<< "$IMAGE_PLAN"
+IMAGE_PLAN_PUBLISHER=${IMAGE_PLAN_PARTS[0]}
+IMAGE_PLAN_PRODUCT=${IMAGE_PLAN_PARTS[1]}
+IMAGE_PLAN_NAME=${IMAGE_PLAN_PARTS[2]}
+
+echo "Using Image '${IMAGE}' for OS $OS"
+echo "Using Plan '${IMAGE_PLAN}' for OS $OS"
 
 # Compute name if necessary
 if [[ -z $NAME || $NAME == "AUTO" ]]; then
-  NAME="$OS CM/CDH preload"
+  NAME="${OS}_CM_CDH_preload_"$(date +"%Y%m%dT%H%M")
 fi
 
 # Get the appropriate parcel file
@@ -277,15 +271,31 @@ case $JDK_REPO in
 esac
 
 # Set up packer variables
-PACKER_VARS_ARRAY=( $PACKER_VARS )
-PACKER_VARS_ARRAY+=(-var "region=$AWS_REGION" -var "parcel_url=$PARCEL_URL" -var "cm_repository_url=$CM_REPO_URL")
+IFS=" " read -r -a PACKER_VARS_ARRAY <<< "$PACKER_VARS"
+PACKER_VARS_ARRAY+=(-var "azure_location=$AZURE_REGION" -var "parcel_url=$PARCEL_URL" -var "cm_repository_url=$CM_REPO_URL")
+
+PACKER_VARS_ARRAY+=(-var "jdk_repository_url=$JDK_REPO_URL")
+PACKER_VARS_ARRAY+=(-var "azure_cloud_environment=$CLOUD")
+
 if [[ -n $CM_GPG_KEY_URL ]]; then
   PACKER_VARS_ARRAY+=(-var "cm_gpg_key_url=$CM_GPG_KEY_URL")
 fi
 PACKER_VARS_ARRAY+=(-var "jdk_repository_url=$JDK_REPO_URL")
-PACKER_VARS_ARRAY+=(-var "ami=$AMI" -var "ami_virtualization_type=$VIRTUALIZATION" -var "ssh_username=$USERNAME" -var "root_device_name=$ROOT_DEVICE_NAME")
-PACKER_VARS_ARRAY+=(-var "ami_prefix=$NAME")
-PACKER_VARS_ARRAY+=(-var "os=$OS")
+
+PACKER_VARS_ARRAY+=(-var "azure_managed_image_name=$NAME")
+PACKER_VARS_ARRAY+=(-var "azure_managed_image_resource_group=$RG")
+
+PACKER_VARS_ARRAY+=(-var "azure_image_publisher=$IMAGE_PUBLISHER")
+PACKER_VARS_ARRAY+=(-var "azure_image_offer=$IMAGE_OFFER")
+PACKER_VARS_ARRAY+=(-var "azure_image_sku=$IMAGE_SKU")
+PACKER_VARS_ARRAY+=(-var "azure_image_version=$IMAGE_VERSION")
+
+if [[ -n $IMAGE_PLAN ]]; then
+    PACKER_VARS_ARRAY+=(-var "azure_image_plan_publisher=$IMAGE_PLAN_PUBLISHER")
+    PACKER_VARS_ARRAY+=(-var "azure_image_plan_product=$IMAGE_PLAN_PRODUCT")
+    PACKER_VARS_ARRAY+=(-var "azure_image_plan_name=$IMAGE_PLAN_NAME")
+fi
+
 PACKER_VARS_ARRAY+=(-var "java_version=$JAVA_VERSION")
 if [[ -n $PRE_EXTRACT ]]; then
   PACKER_VARS_ARRAY+=(-var "preextract_parcel=true")
@@ -297,6 +307,10 @@ if [[ -z $C6 ]]; then
   PACKER_VARS_ARRAY+=(-var "c6=false")
 fi
 
+if [[ -n $OS_VOL_SIZE ]]; then
+  PACKER_VARS_ARRAY+=(-var "os_disk_size_gb=$OS_VOL_SIZE")
+fi
+
 # Set up other packer options
 PACKER_OPTS=()
 if [[ -n $DEBUG ]]; then
@@ -305,4 +319,4 @@ fi
 
 JSON=rhel.json
 
-packer build "${PACKER_VARS_ARRAY[@]}" "${PACKER_OPTS[@]}" packer-json/"$JSON"
+packer build "${PACKER_VARS_ARRAY[@]}" "${PACKER_OPTS[@]}" -var-file credentials.json packer-json/"$JSON"

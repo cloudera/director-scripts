@@ -54,7 +54,10 @@ else
   exit 1
 fi
 
-sudo cp "/opt/cloudera/parcel-repo/$PARCEL_NAME.${CHECKSUM_TYPE}" "/opt/cloudera/parcel-repo/$PARCEL_NAME.sha"
+PARCEL_MANIFEST="${PARCEL_URL%$PARCEL_NAME}manifest.json"
+curl -s -L "$PARCEL_MANIFEST" |
+  python -c "import sys, json; input = json.load(sys.stdin)['parcels']; selected = [x for x in input if x['parcelName'] == '$PARCEL_NAME']; print selected[0]['hash'];" |
+  sudo tee "/opt/cloudera/parcel-repo/$PARCEL_NAME.sha" > /dev/null
 
 echo "Verifying parcel ${CHECKSUM_TYPE} checksum"
 sudo sed "s/$/  ${PARCEL_NAME}/" "/opt/cloudera/parcel-repo/$PARCEL_NAME.${CHECKSUM_TYPE}" |

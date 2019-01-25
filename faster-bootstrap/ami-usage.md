@@ -20,7 +20,7 @@ Policy files enabling unlimited strength cryptography through JCE are made avail
 
 ### Basic Package Installation
 
-Basic packages that Director or Cloudera Manager require, such as screen and python, are in place on the preloaded AMI so that they do not need to be found during bootstrap.
+Basic packages that Director or Cloudera Manager require, such as python, are in place on the preloaded AMI so that they do not need to be found during bootstrap.
 
 ### Oracle JDK and Cloudera Manager Package Installation
 

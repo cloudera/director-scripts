@@ -28,8 +28,8 @@ fi
 PREBAKED_DIRECTORY=/opt/cloudera/director
 PREBAKED_GPG_KEY=${PREBAKED_DIRECTORY}/rhel-key
 
-# Install ntp, curl, nscd, screen, python, bc, and rng-tools
-sudo yum -y install ntp curl nscd screen python bc rng-tools
+# Install ntp, curl, nscd, python, bc, and rng-tools
+sudo yum -y install ntp curl nscd python bc rng-tools
 
 # Director can avoid downloading the GPG key for the Cloudera repository by using a prebaked key file
 sudo mkdir -p "${PREBAKED_DIRECTORY}"

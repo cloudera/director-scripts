@@ -20,9 +20,17 @@ psycopg2 are available for use by Hue. This script supports Red Hat Enterprise
 Linux (RHEL) / CentOS 6.x and 7.x distributions, keying off a single `OS`
 variable that you can modify or replace with OS detection logic.
 
-It is expected that future versions of Cloudera Manager 6.x will better support
-Hue, and some or all of the work done by hue-c6.sh will no longer be
-necessary.
+This script is only an *example* of how to establish the necessary prerequisites
+for Hue to work properly under CDH 6.x. There are alternative means to achieve
+the same ends. Use what fits best for your surrounding environment.
+
+### Important Note
+
+**If you are using Cloudera Manager 6.1.0 or higher, and if you are installing
+Hue on RHEL / CentOS 7.x, then you do not need to use a script like this**, and
+you may leave it out of configuration files and when using the Altus Director
+UI. However, if you are using Cloudera Manager 6.0.x, or if you are installing
+Hue on RHEL / CentOS 6.x, then the work done by this script is still necessary.
 
 ### Handling Python
 

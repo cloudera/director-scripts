@@ -69,9 +69,24 @@ The contents of the (public) server certificate are also reported. Use this data
 
 When using the [manual TLS](https://www.cloudera.com/documentation/director/latest/topics/director_tls_enable.html#concept_rts_nbv_gbb) path for configuring Cloudera Manager for TLS, it is necessary to update the corresponding deployment information in Cloudera Altus Director to enable TLS communication. The [documented process](https://www.cloudera.com/documentation/director/latest/topics/director_tls_enable.html#concept_z4v_ybv_gbb) involves retrieving deployment template data from Cloudera Altus Director's API as JSON, editing the JSON, and submitting the modified template back to Cloudera Altus Director.
 
-The script [update_tls.py](update_tls.py) performs the updating work automatically, by taking advantage of the [Cloudera Altus Director Python SDK](https://github.com/cloudera/director-sdk/tree/master/python-client). The Python SDK must be installed for the script to work.
+The scripts [update-tls.py](update-tls.py) and [update-tls.d6.py](update-tls.d6.py) perform the updating work automatically, by taking advantage of the [Cloudera Altus Director Python SDK](https://github.com/cloudera/director-sdk/tree/master/python-client). Each script requires a different Python SDK version. Select the right script for the SDK version.
 
-Pass the `-h` option to the script to see help information. Common uses for the script are described below.
+<table>
+  <tr><th>script</th><th>Python SDK version required</th></tr>
+  <tr><td><a href="update-tls.py">update-tls.py</a></td><td>2.6.0+</td></tr>
+  <tr><td><a href="update-tls.d6.py">update-tls.d6.py</a></td><td>6.0.0+</td></tr>
+</table>
+
+You may use the [requirements-update-tls.txt](requirements-update-tls.txt) or [requirements-update-tls.d6.txt](requirements-update-tls.d6.txt) file to install the right SDK.
+
+```
+$ pip install -r requirements-update-tls.txt # for update-tls.py
+$ pip install -r requirements-update-tls.d6.txt # for update-tls.d6.py
+```
+
+These instructions use the name `update-tls.py` to refer to either script. They are used in the same way.
+
+Pass the `-h` option to the script to see help information.
 
 ### Enabling TLS
 
@@ -79,7 +94,7 @@ Use the script after Level 0 TLS configuration has been completed for Cloudera M
 
 *Note: If Cloudera Altus Director's Java runtime is already configured to trust the required server certificate or CA, then the trusted certificate does not need to be passed to the script.*
 
-Run `update_tls.py` with the name of the environment where Cloudera Manager resides, the name of the deployment corresponding to the Cloudera Manager instance, and the new port number. Pass the path to the trusted certificate file using the `--trusted-cert-file` option. If Cloudera Altus Director is not running local to the script, then pass its URL with the `--server` option.
+Run `update-tls.py` with the name of the environment where Cloudera Manager resides, the name of the deployment corresponding to the Cloudera Manager instance, and the new port number. Pass the path to the trusted certificate file using the `--trusted-cert-file` option. If Cloudera Altus Director is not running local to the script, then pass its URL with the `--server` option.
 
 ```
 $ python2 update-tls.py --trusted-cert-file server.crt --server http://director-host:7189 env dep 7183
@@ -91,7 +106,7 @@ After successful deployment update, Cloudera Altus Director will communicate wit
 
 ### Disabling TLS
 
-If it becomes necessary to disable TLS for Cloudera Manager, it is possible to update Cloudera Altus Director so that it communicates over unencrypted HTTP to Cloudera Manager. Run `update_tls.py` once again, this time passing the `--disable` option. Do not include the trusted certificate file, but do specify the new port that the Cloudera Manager server listens on (usually 7180).
+If it becomes necessary to disable TLS for Cloudera Manager, it is possible to update Cloudera Altus Director so that it communicates over unencrypted HTTP to Cloudera Manager. Run `update-tls.py` once again, this time passing the `--disable` option. Do not include the trusted certificate file, but do specify the new port that the Cloudera Manager server listens on (usually 7180).
 
 ```
 $ python2 update-tls.py --disable --server http://director-host:7189 env dep 7180
@@ -103,6 +118,7 @@ After successful deployment update, Cloudera Altus Director will communicate wit
 
 ### Troubleshooting Use of the Script
 
+* Use the correct script for the installed version of the Altus Director Python SDK.
 * The script must be able to log in to a Cloudera Altus Director server. Be sure to supply the correct server URL and, if necessary, administrative username and password.
 * The script accepts two certificate files: one for Cloudera Altus Director itself (`--cafile`), and one for Cloudera Manager when enabling TLS (`--trusted-cert-file`). They are almost always different. Use `--cafile` to refer to the trusted certificate for the Cloudera Altus Director server, and `--trusted-cert-file` to refer to the trusted certificate for the Cloudera Manager server. The trusted certificate for the Cloudera Altus Director server is only necessary when Cloudera Altus Director itself is configured for TLS.
 * The script fails with an error if you try to enable TLS for a deployment where it is already enabled, or disable TLS for a deployment where it is already disabled.

@@ -19,6 +19,7 @@ declare -A BASE_IMAGES=(
   ["centos68"]="cloudera:cloudera-centos-os:6_8:latest"
   ["centos72"]="cloudera:cloudera-centos-os:7_2:latest"
   ["centos74"]="cloudera:cloudera-centos-os:7_4:latest"
+  ["centos75"]="cloudera:cloudera-centos-os:7_5:latest"
   ["rhel67"]="RedHat:RHEL:6.7:latest"
   ["rhel68"]="RedHat:RHEL:6.8:latest"
   ["rhel69"]="RedHat:RHEL:6.9:latest"
@@ -33,4 +34,5 @@ declare -A BASE_PLANS=(
   ["centos68"]="cloudera:cloudera-centos-os:6_8"
   ["centos72"]="cloudera:cloudera-centos-os:7_2"
   ["centos74"]="cloudera:cloudera-centos-os:7_4"
+  ["centos75"]="cloudera:cloudera-centos-os:7_5"
 )

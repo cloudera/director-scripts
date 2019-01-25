@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-# Copyright (c) 2017 Cloudera, Inc.
+# Copyright (c) 2018 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,9 +18,8 @@ import argparse
 import sys
 from urllib2 import HTTPError
 
-from cloudera.director.common.client import ApiClient
-from cloudera.director.latest import (AuthenticationApi, DeploymentsApi)
-from cloudera.director.latest.models import Login
+from cloudera.director.common.client import ApiClient, Configuration
+from cloudera.director.latest import DeploymentsApi
 
 def get_authenticated_client(args):
     """
@@ -32,16 +31,13 @@ def get_authenticated_client(args):
     @return:     authenticated API client
     """
 
-    # Start by creating a client pointing to the right server
-    tls_enabled = args.server.startswith('https')
-    client = ApiClient(args.server, tls_enabled=tls_enabled, cafile=args.cafile,
-                       hostname_verification_enabled=True)
+    configuration = Configuration()
+    configuration.host = args.server
+    configuration.username = args.admin_username
+    configuration.password = args.admin_password
+    configuration.ssl_ca_cert = args.cafile
 
-    # Authenticate. This will start a session and store the cookie
-    auth = AuthenticationApi(client)
-    auth.login(Login(username=args.admin_username, password=args.admin_password))
-
-    return client
+    return ApiClient(configuration=configuration)
 
 def get_deployment_template(client, env_name, dep_name):
     """
@@ -55,7 +51,7 @@ def get_deployment_template(client, env_name, dep_name):
     """
     api = DeploymentsApi(client)
     try:
-        return api.getTemplateRedacted(env_name, dep_name)
+        return api.get_template_redacted(env_name, dep_name)
     except HTTPError as error:
         if error.code == 404:
             print 'Error: the deployment %s does not exist in the environment %s' % (env_name, dep_name)
@@ -72,13 +68,13 @@ def enable_tls_for(template, port, trusted_cert_file):
     @rtype: DeploymentTemplate
     @return: updated deployment template
     """
-    if template.tlsEnabled:
+    if template.tls_enabled:
         raise Exception('Error: the deployment %s already has TLS enabled' % template.name)
-    template.tlsEnabled = True
+    template.tls_enabled = True
     template.port = port
     if trusted_cert_file:
         cert_contents = trusted_cert_file.read()
-        template.trustedCertificate = cert_contents
+        template.trusted_certificate = cert_contents
     return template
 
 def disable_tls_for(template, port):
@@ -90,11 +86,11 @@ def disable_tls_for(template, port):
     @rtype: DeploymentTemplate
     @return: updated deployment template
     """
-    if not template.tlsEnabled:
+    if not template.tls_enabled:
         raise Exception('Error: the deployment %s already has TLS disabled' % template.name)
-    template.tlsEnabled = False
+    template.tls_enabled = False
     template.port = port
-    template.trustedCertificate = None
+    template.trusted_certificate = None
     return template
 
 def update_deployment_template(client, env_name, dep_name, template):

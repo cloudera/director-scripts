@@ -34,10 +34,10 @@ The build-ami.sh script has two required arguments and four optional arguments.
   automatically.
 * (Optional) The CDH parcel URL. This script will download a parcel from this URL to preload and
   possibly pre-extract onto the new AMI. This argument defaults to
-  https://archive.cloudera.com/cdh6/6.0/parcels/.
+  https://archive.cloudera.com/cdh6/6.1/parcels/.
 * (Optional) The Cloudera Manager yum repository URL. This script will download and install
   Cloudera Manager from packages at this URL onto the new AMI. This argument defaults to
-  https://archive.cloudera.com/cm6/6.0/redhat7/yum/.
+  https://archive.cloudera.com/cm6/6.1/redhat7/yum/.
 * (Optional) The URL for the GPG key associated with the Cloudera Manager yum repository.  For
   Cloudera Manager yum repositories hosted on archive.cloudera.com (including the default
   repository), the correct URL can be determined on the fly, and so this argument does not need
@@ -134,15 +134,23 @@ Any paths in the ZIP file are ignored; the files are extracted directly into jre
 
 #### Working with CDH 6
 
-The Hue service included in CDH 6.x has specific requirements beyond what is normally available from Cloudera Manager 6.x and the underlying operating system. See [this bootstrap script README](../c6/README.md) for more information. A [bootstrap script](../c6/hue-c6.sh) is available for use on cluster instances, but an alternative is to bake the work that the script does into a preloaded AMI. To do so, pass the `-6` option to the build-ami.sh script.
+The Hue service included in CDH 6.x has specific requirements beyond what is normally available from Cloudera Manager 6.0 and the underlying operating system. See [this bootstrap script README](../c6/README.md) for more information. A [bootstrap script](../c6/hue-c6.sh) is available for use on cluster instances, but an alternative is to bake the work that the script does into a preloaded AMI. To do so, pass the `-6` option to the build-ami.sh script.
 
     $ bash build-ami.sh -6 us-east-1 centos72 "AMI name" \
     > https://mirror.example.com/cdh6/6.0.0/parcels/ \
     > https://mirror.example.com/cm6/6.0.0/redhat7/yum/
 
-An AMI built with the `-6` option has the necessary work baked in for Hue in CDH 6.x to work properly, so it's not necessary to also specify the bootstrap script in instance templates that use the preloaded AMI. When the option is not used, then the bootstrap script must be used on the preloaded AMI.
+The additional work for Hue is necessary if *all* of the following are true:
 
-Note: The build-ami.sh script defaults to CDH 6.x parcels. If you don't specify a CDH parcel URL, or if you specify the default CDH parcel URL, then the build-ami.sh script assumes that CDH 6.x is being installed, and you don't need to explicitly use the `-6` option. Otherwise, even if the custom CDH parcel URL points to a CDH 6.x parcel repository, you must use the `-6` option for the build-ami.sh script to do the work for Hue.
+* CDH 6.x is being used.
+* Cloudera Manager 6.0.x is intended to be used.
+* An operating system other than CentOS or Red Hat Enterprise Linux 7 is being used.
+
+Starting with version 6.1, Cloudera Manager can configure Hue in CDH 6.x properly on its own, but only for CentOS and Red Hat Enterprise Linux 7. if you intend to use Cloudera Manager 6.0.x, or if you are building an AMI for CentOS or Red Hat Enterprise Linux 6, then the `-6` option is still useful.
+
+If the option is not used to bake the work into the AMI, then you may still specify the bootstrap script in instance templates that use the preloaded AMI.
+
+Note: A prior version of the build-ami.sh script would default to activating this option under certain situations, but this behavior is no longer present. Instead, use the guidance above to explicitly pass the option if it is needed.
 
 #### Pre-extracting Parcels
 

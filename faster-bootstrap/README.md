@@ -34,10 +34,10 @@ The build-ami.sh script has two required arguments and four optional arguments.
   automatically.
 * (Optional) The CDH parcel URL. This script will download a parcel from this URL to preload and
   possibly pre-extract onto the new AMI. This argument defaults to
-  https://archive.cloudera.com/cdh6/6.1/parcels/.
+  https://archive.cloudera.com/cdh6/6.2/parcels/.
 * (Optional) The Cloudera Manager yum repository URL. This script will download and install
   Cloudera Manager from packages at this URL onto the new AMI. This argument defaults to
-  https://archive.cloudera.com/cm6/6.1/redhat7/yum/.
+  https://archive.cloudera.com/cm6/6.2/redhat7/yum/.
 * (Optional) The URL for the GPG key associated with the Cloudera Manager yum repository.  For
   Cloudera Manager yum repositories hosted on archive.cloudera.com (including the default
   repository), the correct URL can be determined on the fly, and so this argument does not need
@@ -203,6 +203,8 @@ Also, be sure that the AMI used for the build uses a virtualization type (paravi
 You may use a different instance type for running instances of the resulting preloaded AMI than the one used to build it.
 
 ## Faster Bootstrap for Cloudera Manager (experimental)
+
+***NOTE** Faster Bootstrap is no longer experimental, and is enabled by default, in Cloudera Manager 6.0.0 and higher. So, no action is necessary to take advantage of it. Continue to follow these instructions to use Faster Bootstrap in earlier versions of Cloudera Manager.*
 
 Versions of Cloudera Manager starting with 5.9.0 include an *experimental* "Faster Bootstrap" capability. Enabling it can help Cloudera Manager to bootstrap clusters a few minutes faster.
 

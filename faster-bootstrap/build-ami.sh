@@ -42,9 +42,9 @@ Usage: $0 [options] <aws-region> <os> [<name>] [<parcel-url>] [<repository-url>]
   [<name>]:      An optional descriptive name for the new AMI.
       Default is calculated dynamically (specified by "AUTO")
   [<parcel-url>]:      Optional parcel URL to use for preloading.
-      Default https://archive.cloudera.com/cdh6/6.1/parcels/
+      Default https://archive.cloudera.com/cdh6/6.2/parcels/
   [<repository-url>]:  Optional Cloudera Manager yum repo to use for preloading.
-      Default https://archive.cloudera.com/cm6/6.1/redhat7/yum/
+      Default https://archive.cloudera.com/cm6/6.2/redhat7/yum/
   [<repository-key-url>]:  Optional URL for Cloudera Manager yum repo GPG key.
       Required only if repository-url is not at archive.cloudera.com
 
@@ -184,14 +184,14 @@ else
     echo "Found packer version: $(packer version)"
 fi
 
-DEFAULT_CDH_URL=https://archive.cloudera.com/cdh6/6.1/parcels/
+DEFAULT_CDH_URL=https://archive.cloudera.com/cdh6/6.2/parcels/
 
 # Gather arguments into variables
 AWS_REGION=$1
 OS=$2
 NAME=${3-AUTO}
 CDH_URL=${4-${DEFAULT_CDH_URL}}
-CM_REPO_URL=${5-"https://archive.cloudera.com/cm6/6.1/redhat7/yum/"}
+CM_REPO_URL=${5-"https://archive.cloudera.com/cm6/6.2/redhat7/yum/"}
 CM_GPG_KEY_URL=$6
 
 # Validate OS TBD

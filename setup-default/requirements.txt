@@ -1,2 +1,2 @@
-cloudera-director-python-client==6.1.0
+cloudera-director-python-client==6.2.0
 pyhocon==0.3.8

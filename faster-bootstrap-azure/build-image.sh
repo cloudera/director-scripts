@@ -44,9 +44,9 @@ Usage: $0 [options] <azure-region> <resource-group> <os> [<name>] [<parcel-url>]
   [<name>]:  An optional descriptive name for the new Image.
       Default is calculated dynamically (specified by "AUTO")
   [<parcel-url>]:  Optional parcel URL to use for preloading.
-      Default https://archive.cloudera.com/cdh6/6.1/parcels/
+      Default https://archive.cloudera.com/cdh6/6.2/parcels/
   [<repository-url>]:  Optional Cloudera Manager yum repo to use for preloading.
-      Default https://archive.cloudera.com/cm6/6.1/redhat7/yum/ or https://archive.cloudera.com/cm6/6.1/redhat6/yum/
+      Default https://archive.cloudera.com/cm6/6.2/redhat7/yum/ or https://archive.cloudera.com/cm6/6.2/redhat6/yum/
   [<repository-key-url>]:  Optional URL for Cloudera Manager yum repo GPG key.
       Required only if repository-url is not at archive.cloudera.com
 
@@ -182,7 +182,7 @@ else
     echo "Found packer version: $(packer version)"
 fi
 
-DEFAULT_CDH_URL=https://archive.cloudera.com/cdh6/6.1/parcels/
+DEFAULT_CDH_URL=https://archive.cloudera.com/cdh6/6.2/parcels/
 
 # Gather arguments into variables
 AZURE_REGION=$1
@@ -191,9 +191,9 @@ OS=$3
 NAME=${4-AUTO}
 CDH_URL=${5-${DEFAULT_CDH_URL}}
 if [[ $OS =~ ^(centos|rhel)7.*$ ]]; then
-  CM_REPO_URL=${6-"https://archive.cloudera.com/cm6/6.1/redhat7/yum/"}
+  CM_REPO_URL=${6-"https://archive.cloudera.com/cm6/6.2/redhat7/yum/"}
 else
-  CM_REPO_URL=${6-"https://archive.cloudera.com/cm6/6.1/redhat6/yum/"}
+  CM_REPO_URL=${6-"https://archive.cloudera.com/cm6/6.2/redhat6/yum/"}
 fi
 CM_GPG_KEY_URL=$7
 

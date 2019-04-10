@@ -15,7 +15,7 @@
 # limitations under the License.
 
 # For this script to work properly, you need to supply a URL to a parcel file,
-# e.g. http://archive-primary.cloudera.com/cdh5/parcels/5.7.0/CDH-5.7.0-1.cdh5.7.0.p0.45-el7.parcel
+# e.g. http://archive.cloudera.com/cdh5/parcels/5.7.0/CDH-5.7.0-1.cdh5.7.0.p0.45-el7.parcel
 
 # You can do this one of two ways:
 # 1. Set a PARCEL_URL environment variable.
@@ -38,7 +38,8 @@ then
   fi
 fi
 
-sudo useradd -r cloudera-scm
+# Just in case multiple parcels are being deployed in the one image
+id cloudera-scm 2>&1 >& /dev/null || sudo useradd -r cloudera-scm
 sudo mkdir -p /opt/cloudera/parcels /opt/cloudera/parcel-repo /opt/cloudera/parcel-cache
 
 PARCEL_NAME="${PARCEL_URL##*/}"
@@ -78,17 +79,24 @@ case $CHECKSUM_TYPE in
 esac
 sudo rm "/opt/cloudera/parcel-repo/$PARCEL_NAME.shacheck"
 
-for parcel_path in /opt/cloudera/parcel-repo/*.parcel
+for parcel_path in /opt/cloudera/parcel-repo/$PARCEL_NAME
 do
     sudo ln "$parcel_path" "/opt/cloudera/parcel-cache/$(basename "$parcel_path")"
 done
-sudo chown -R cloudera-scm:cloudera-scm /opt/cloudera
 
 if [ "$PREEXTRACT_PARCEL" = true ]
 then
   echo "Preextracting parcels..."
+  PRODUCT_NAME="${PARCEL_NAME/-*/}"
   sudo tar zxf "/opt/cloudera/parcel-repo/$PARCEL_NAME" -C "/opt/cloudera/parcels"
-  sudo ln -s "$(ls -1 /opt/cloudera/parcels)" /opt/cloudera/parcels/CDH
-  sudo touch /opt/cloudera/parcels/CDH/.dont_delete
+  cd /opt/cloudera/parcels/
+  sudo ln -s ${PARCEL_NAME%-*.parcel} $PRODUCT_NAME
+  sudo touch /opt/cloudera/parcels/$PRODUCT_NAME/.dont_delete
   echo "Done"
 fi
+
+sudo chown -R cloudera-scm:cloudera-scm /opt/cloudera
+
+echo "Sync Linux volumes with EBS."
+sudo sync
+sleep 5

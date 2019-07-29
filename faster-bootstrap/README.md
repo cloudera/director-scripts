@@ -34,10 +34,10 @@ The build-ami.sh script has two required arguments and four optional arguments.
   automatically.
 * (Optional) The CDH parcel URL. This script will download a parcel from this URL to preload and
   possibly pre-extract onto the new AMI. This argument defaults to
-  https://archive.cloudera.com/cdh6/6.2/parcels/.
+  https://archive.cloudera.com/cdh6/6.3/parcels/.
 * (Optional) The Cloudera Manager yum repository URL. This script will download and install
   Cloudera Manager from packages at this URL onto the new AMI. This argument defaults to
-  https://archive.cloudera.com/cm6/6.2/redhat7/yum/.
+  https://archive.cloudera.com/cm6/6.3/redhat7/yum/.
 * (Optional) The URL for the GPG key associated with the Cloudera Manager yum repository.  For
   Cloudera Manager yum repositories hosted on archive.cloudera.com (including the default
   repository), the correct URL can be determined on the fly, and so this argument does not need

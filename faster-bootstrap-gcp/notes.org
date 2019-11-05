@@ -1,0 +1,9 @@
+* Notes about how the gcp image needs to be constructed
+* Required fields
+* Optional fields
+** public ip address
+How will this be handled?
+** specific images as base image
+** 
+* Other fields
+- ~labels~ :: might need to label the instance with an owner to prevent it being torn down

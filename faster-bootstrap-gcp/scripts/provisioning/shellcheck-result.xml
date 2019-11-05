@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<checkstyle version='4.3'>
+<file name='parcel&#95;provisioner.sh' >
+</file>
+<file name='rewrite&#95;root&#95;disk&#95;partition&#95;table.sh' >
+<error line='24' column='15' severity='warning' message='Quote this to prevent word splitting.' source='ShellCheck.SC2046' />
+<error line='37' column='20' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+<error line='42' column='41' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+<error line='43' column='44' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+<error line='45' column='21' severity='info' message='&#36;/&#36;&#123;&#125; is unnecessary on arithmetic variables.' source='ShellCheck.SC2004' />
+<error line='45' column='52' severity='info' message='&#36;/&#36;&#123;&#125; is unnecessary on arithmetic variables.' source='ShellCheck.SC2004' />
+<error line='61' column='46' severity='warning' message='Grep uses regex&#44; but this looks like a glob.' source='ShellCheck.SC2063' />
+<error line='80' column='32' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+<error line='83' column='29' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+<error line='84' column='28' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+<error line='85' column='23' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+<error line='87' column='37' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+<error line='87' column='57' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+<error line='88' column='20' severity='info' message='Useless echo&#63; Instead of &#39;cmd &#36;&#40;echo foo&#41;&#39;&#44; just use &#39;cmd foo&#39;.' source='ShellCheck.SC2116' />
+<error line='88' column='27' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+<error line='89' column='37' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+<error line='89' column='57' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+<error line='90' column='27' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+<error line='92' column='18' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+<error line='92' column='41' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+<error line='92' column='61' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+<error line='93' column='15' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+<error line='93' column='58' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+<error line='93' column='78' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+<error line='94' column='15' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+<error line='94' column='35' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+<error line='94' column='49' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+</file>
+<file name='rhel&#95;destroy&#95;ssh&#95;host&#95;keys.sh' >
+</file>
+<file name='rhel&#95;provisioner.sh' >
+<error line='75' column='1' severity='info' message='Not following&#58; /tmp/service&#95;control.sh was not specified as input &#40;see shellcheck &#45;x&#41;.' source='ShellCheck.SC1091' />
+</file>
+<file name='service&#95;control.sh' >
+</file>
+<file name='setup&#95;unlimited&#95;strength&#95;jce.sh' >
+</file>
+</checkstyle>

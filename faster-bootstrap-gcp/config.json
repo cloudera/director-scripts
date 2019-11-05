@@ -1,0 +1,7 @@
+{
+    "java_version" : "1.8"
+    ,"vpc_id" : "vpc-c06a7ba7"
+    ,"subnet_id" : "subnet-0e313378cbea1f8da"
+    ,"associate_public_ip_address": "true"
+    ,"ssh_keypair_name" : "toby-aws-west-2"
+}

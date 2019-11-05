@@ -1,0 +1,5 @@
+{
+    "vpc_id": "vpc-c06a7ba7",
+    "subnet_id": "subnet-975b1ede",
+    "associate_public_ip_address": "true"
+}

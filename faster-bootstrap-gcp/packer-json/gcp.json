@@ -1,0 +1,86 @@
+{
+    "variables": {
+	"project_id": null,
+	"parcel_url": null,
+        "cm_repository_url": null,
+        "jdk_repository_url": null,
+	"java_version": null,
+	"source_image_family": null,
+	"image_name": "",
+	"preextract_parcel": "",
+	"c6": "true",
+        "cm_gpg_key_url": "",
+	"machine_type": "n1-standard-4",
+	"zone": null,
+	"ssh_username": "google"
+    }	
+    
+
+    ,"builders": [
+	{ 
+	    "type": "googlecompute"
+	    ,"machine_type" : "{{user `machine_type`}}"
+	    ,"project_id": "{{user `project_id`}}"
+	    ,"source_image_family": "{{user `source_image_family`}}"
+	    ,"ssh_username": "google"
+	    ,"zone": "{{user `zone`}}"
+	    ,"image_name": "{{user `image_name`}}"
+	}
+    ]
+    ,"provisioners": [
+    {
+        "type": "shell",
+        "inline": "sudo yum install --assumeyes gdisk"
+    },
+    {
+        "type": "file",
+        "source": "scripts/provisioning/internal/",
+        "destination": "/tmp"
+    },
+    {
+        "type": "shell",
+        "inline": "shopt -s nullglob; for s in /tmp/internal*.sh; do bash \"$s\"; done"
+    },
+    {
+        "type": "shell",
+        "script": "scripts/provisioning/rewrite_root_disk_partition_table.sh",
+        "environment_vars": ["PATH=/bin:/sbin:/usr/bin:/usr/sbin"],
+        "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E {{ .Path }}"
+    },
+    {
+        "type": "shell",
+        "inline": "sudo reboot",
+        "expect_disconnect": true
+    },
+    {
+        "type": "file",
+        "source": "scripts/provisioning/service_control.sh",
+        "destination": "/tmp/service_control.sh",
+        "pause_before": "120s"
+    },
+    {
+        "type": "shell",
+        "scripts": ["scripts/provisioning/hue-c6.sh"],
+        "environment_vars": ["OS={{user `os`}}"],
+        "execute_command": "chmod +x {{ .Path }}; if [[ {{user `c6`}} == true ]]; then sudo {{ .Vars }} {{ .Path }}; fi"
+    },
+    {
+        "type": "file",
+        "source": "files/jce/",
+        "destination": "/tmp"
+    },
+    {
+        "type": "shell",
+        "scripts": ["scripts/provisioning/rhel_provisioner.sh",
+                    "scripts/provisioning/setup_unlimited_strength_jce.sh",
+                    "scripts/provisioning/parcel_provisioner.sh",
+                    "scripts/provisioning/rhel_destroy_ssh_host_keys.sh"],
+        "environment_vars": ["PARCEL_URL={{user `parcel_url`}}", "CM_REPOSITORY_URL={{user `cm_repository_url`}}",
+                             "CM_GPG_KEY_URL={{user `cm_gpg_key_url`}}",
+                             "JAVA_VERSION={{user `java_version`}}",
+                             "JDK_REPOSITORY_URL={{user `jdk_repository_url`}}",
+                             "PREEXTRACT_PARCEL={{user `preextract_parcel`}}"]
+    }]
+
+}
+	    
